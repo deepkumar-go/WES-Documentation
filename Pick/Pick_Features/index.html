@@ -1,0 +1,520 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Pick Module — Features Reference</title>
+<style>
+:root {
+  --bg:      #0B1018;
+  --s1:      #111827;
+  --s2:      #182030;
+  --border:  #1E2D3E;
+  --accent:  #3C82C8;
+  --accent-d:#1B3D62;
+  --accent-t:#6AABEC;
+  --text:    #C8D8E8;
+  --text-2:  #A0BCCE;
+  --text-3:  #8899AA;
+  --amber-t: #D4A060;
+  --mono:    'JetBrains Mono','Cascadia Code',Consolas,'Courier New',monospace;
+  --sans:    -apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:13.5px;line-height:1.6;-webkit-font-smoothing:antialiased}
+
+/* ── LAYOUT ── */
+.shell{display:flex;flex-direction:column;min-height:100vh}
+.header{background:var(--s1);border-bottom:1px solid var(--border);padding:0 28px;height:56px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:100}
+.header-title{font-family:var(--mono);font-size:14px;font-weight:700;color:var(--accent-t);letter-spacing:-0.01em}
+.header-sub{font-family:var(--mono);font-size:11px;color:var(--text-3);letter-spacing:0.04em}
+.header-badge{margin-left:auto;font-family:var(--mono);font-size:10px;color:var(--text-3);border:1px solid var(--border);padding:2px 10px;letter-spacing:0.05em}
+
+/* ── BODY ── */
+.body{display:flex;flex:1}
+
+/* ── SIDEBAR ── */
+.sidebar{width:220px;flex-shrink:0;background:var(--s1);border-right:1px solid var(--border);position:sticky;top:56px;height:calc(100vh - 56px);overflow-y:auto;padding:16px 0}
+.sidebar::-webkit-scrollbar{width:4px}.sidebar::-webkit-scrollbar-track{background:transparent}.sidebar::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+.sb-section{padding:6px 16px;font-family:var(--mono);font-size:9px;letter-spacing:0.1em;color:var(--text-3);text-transform:uppercase;margin-top:12px}
+.sb-link{display:block;padding:5px 16px 5px 20px;font-size:12px;color:var(--text-2);text-decoration:none;border-left:2px solid transparent;transition:all 0.15s}
+.sb-link:hover{color:var(--accent-t);border-left-color:var(--accent)}
+.sb-link.active{color:var(--accent-t);border-left-color:var(--accent);background:color-mix(in srgb,var(--accent) 8%,transparent)}
+
+/* ── CONTENT ── */
+.content{flex:1;padding:28px 36px;overflow-x:hidden;max-width:1200px}
+
+/* ── SECTION HEADER ── */
+.sec-head{font-family:var(--mono);font-size:11px;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-3);border-bottom:1px solid var(--border);padding-bottom:8px;margin-bottom:20px;margin-top:32px}
+.sec-head:first-child{margin-top:0}
+
+/* ── CATEGORY BADGE ── */
+.cat-badge{display:inline-block;font-family:var(--mono);font-size:9px;letter-spacing:0.08em;padding:2px 8px;border-radius:3px;margin-bottom:6px;text-transform:uppercase}
+.cat-a{background:color-mix(in srgb,var(--accent) 15%,transparent);color:var(--accent-t);border:1px solid var(--accent-d)}
+.cat-b{background:color-mix(in srgb,#2D7A58 15%,transparent);color:#5FBFA0;border:1px solid #1a4a35}
+.cat-c{background:color-mix(in srgb,#A07028 15%,transparent);color:#D4A060;border:1px solid #5a3e14}
+.cat-d{background:color-mix(in srgb,#8C3030 15%,transparent);color:#E07070;border:1px solid #4a1a1a}
+
+/* ── CARD ── */
+.card{background:var(--s1);border:1px solid var(--border);border-radius:4px;padding:18px 20px;margin-bottom:16px}
+.card-title{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--text);letter-spacing:0.03em;margin-bottom:12px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.flow-tag{font-size:10px;font-family:var(--mono);color:var(--accent-t);border:1px solid var(--accent-d);padding:1px 7px;border-radius:3px;font-weight:400}
+
+/* ── SEARCH ── */
+.search-wrap{position:sticky;top:56px;z-index:90;background:var(--bg);padding:14px 36px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
+.search-input{flex:1;max-width:420px;background:var(--s1);border:1px solid var(--border);border-radius:4px;padding:7px 12px;font-family:var(--mono);font-size:12px;color:var(--text);outline:none;transition:border 0.15s}
+.search-input:focus{border-color:var(--accent)}
+.search-input::placeholder{color:var(--text-3)}
+.search-count{font-family:var(--mono);font-size:11px;color:var(--text-3)}
+
+/* ── TABLE ── */
+.tbl-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+th{font-family:var(--mono);font-size:10px;letter-spacing:0.06em;text-transform:uppercase;color:var(--text-3);border-bottom:1px solid var(--border);padding:6px 10px;text-align:left;white-space:nowrap}
+td{padding:7px 10px;border-bottom:1px solid color-mix(in srgb,var(--border) 50%,transparent);vertical-align:top;color:var(--text)}
+td:first-child{font-weight:500;white-space:nowrap;color:var(--text)}
+td:nth-child(2){color:var(--text-2);max-width:320px}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:color-mix(in srgb,var(--accent) 4%,transparent)}
+tr.hidden{display:none}
+
+/* ── CONFIG KEYS ── */
+.cfg-keys{display:flex;flex-wrap:wrap;gap:4px}
+code{font-family:var(--mono);font-size:10.5px;background:var(--s2);color:var(--accent-t);padding:1px 6px;border-radius:3px;white-space:nowrap;border:1px solid var(--border)}
+em.no-cfg{font-style:italic;color:var(--text-3);font-size:11.5px}
+
+/* ── HIGHLIGHT ── */
+mark{background:color-mix(in srgb,var(--accent) 30%,transparent);color:var(--accent-t);border-radius:2px;padding:0 1px}
+
+/* ── CAVEAT ── */
+.caveat{background:var(--s2);border:1px solid var(--accent-d);border-radius:4px;padding:14px 18px;margin-top:24px}
+.caveat-label{font-family:var(--mono);font-size:9px;letter-spacing:0.1em;text-transform:uppercase;color:var(--amber-t);margin-bottom:6px}
+.caveat p{color:var(--text-2);font-size:13px;line-height:1.7}
+</style>
+</head>
+<body>
+<div class="shell">
+
+<header class="header">
+  <div>
+    <div class="header-title">pick/ — Features Reference</div>
+    <div class="header-sub">butler_server · apps/pick</div>
+  </div>
+  <div class="header-badge">385 CONFIGS · 4 CATEGORIES</div>
+</header>
+
+<div class="search-wrap">
+  <input class="search-input" id="search" type="text" placeholder="Search features or config keys…" oninput="filterAll(this.value)" autocomplete="off">
+  <span class="search-count" id="search-count"></span>
+</div>
+
+<div class="body">
+
+<!-- ── SIDEBAR ── -->
+<nav class="sidebar" id="sidebar">
+  <div class="sb-section">A · Generic</div>
+  <a class="sb-link" href="#g-order">Order Management</a>
+  <a class="sb-link" href="#g-rack">Rack Selection</a>
+  <a class="sb-link" href="#g-picklist">Picklist &amp; Transport</a>
+  <a class="sb-link" href="#g-bin">Bin &amp; Container</a>
+  <a class="sb-link" href="#g-operator">Operator Interaction</a>
+
+  <div class="sb-section">B · Flow-Specific</div>
+  <a class="sb-link" href="#f-vanilla">Standard GTP / Vanilla</a>
+  <a class="sb-link" href="#f-easyloop">EasyLoop / Single PPS</a>
+  <a class="sb-link" href="#f-shuttle">Shuttle / Relay</a>
+  <a class="sb-link" href="#f-zerowalk">Zerowalk / RMS / TSORT</a>
+  <a class="sb-link" href="#f-rpick">RPick / Retail</a>
+  <a class="sb-link" href="#f-autopick">Autopick</a>
+
+  <div class="sb-section">C · Advanced</div>
+  <a class="sb-link" href="#a-uom">UOM &amp; Checklist</a>
+  <a class="sb-link" href="#a-msio">MSIO</a>
+  <a class="sb-link" href="#a-tpq">TPQ</a>
+  <a class="sb-link" href="#a-streaming">Streaming (Advanced)</a>
+  <a class="sb-link" href="#a-vtm">VTM</a>
+  <a class="sb-link" href="#a-cubing">Cubing &amp; Volumetric</a>
+  <a class="sb-link" href="#a-inventory">Inventory Strategies</a>
+
+  <div class="sb-section">D · Exceptions</div>
+  <a class="sb-link" href="#d-exceptions">Exception &amp; Recovery</a>
+</nav>
+
+<!-- ── CONTENT ── -->
+<main class="content" id="content">
+
+  <!-- ══ A · GENERIC ══════════════════════════════════════════ -->
+  <div class="sec-head">A · Generic Features</div>
+  <p style="color:var(--text-2);font-size:12.5px;margin-bottom:20px">Present across all or most pick flows regardless of station topology.</p>
+
+  <div class="card" id="g-order">
+    <div class="card-title"><span class="cat-badge cat-a">Generic</span> Order Management &amp; Scheduling</div>
+    <div class="tbl-wrap"><table id="t-g-order">
+      <thead><tr><th>Feature</th><th>Description</th><th>Config Keys</th></tr></thead>
+      <tbody>
+        <tr><td>Order Processing</td><td>Core lifecycle: add → allocate → complete → cancel</td><td><div class="cfg-keys"><code>auto_order_processing_interval</code><code>order_auto_release</code><code>safe_mode_for_order_manager</code></div></td></tr>
+        <tr><td>Order Allocation</td><td>Assigns orders to PPS based on priority, SLA, and throughput goals</td><td><div class="cfg-keys"><code>task_prioritization_algo</code><code>order_processing_cores</code><code>order_processing_cost_limit</code><code>order_processing_min_loop_timeout</code><code>find_best_cost_orders_depth</code></div></td></tr>
+        <tr><td>PBT Management</td><td>Pick-By-Time SLA enforcement and breach detection</td><td><div class="cfg-keys"><code>pbt_offset_in_seconds</code><code>pbt_system_time_buffer</code><code>pbt_waving_window</code><code>non_pbt_waving_window</code><code>pps_task_priority_consider_pbt_breach</code><code>prioritize_orders_post_breach</code></div></td></tr>
+        <tr><td>PAT Handling</td><td>Holds orders until Pick-After-Time window opens; handled in order_manager logic</td><td><div class="cfg-keys"><em class="no-cfg">No dedicated config key</em></div></td></tr>
+        <tr><td>Order Streaming</td><td>Continuous order flow pipeline for high-throughput steady-state picking</td><td><div class="cfg-keys"><code>streaming_orders</code><code>streaming_order_batch_size</code><code>streaming_bin_size</code><code>streaming_bin_tags</code><code>streaming_pps_list</code><code>streaming_volumetric_fraction</code><code>streaming_item_expiry_time</code><code>max_streaming_orders</code><code>min_streaming_orders</code><code>order_streaming_cores</code><code>streaming_free_bins_or_docks_percent_for_order_commit</code><code>streaming_order_pick_in_sequence</code></div></td></tr>
+        <tr><td>Sorted Order Queue</td><td>Priority queue for scheduler allocation cycles</td><td><div class="cfg-keys"><code>is_prioritize_required</code><code>is_pps_task_priority_fifo</code><code>priority_sequence_range</code></div></td></tr>
+        <tr><td>Pick Scheduling Cycles</td><td>~20 allocation cycles per PPS; each cycle can use different selection criteria</td><td><div class="cfg-keys"><code>max_allowed_tasks_per_pps</code><code>max_qty_per_pick_cycle</code><code>ppstask_cost_increment_on_pps_close</code></div></td></tr>
+        <tr><td>Order Modification</td><td>Supports qty/bin changes to orders mid-flight</td><td><div class="cfg-keys"><code>simple_group_permissible_change</code><code>simple_to_order_priority</code></div></td></tr>
+        <tr><td>Order Cancellation</td><td>Cancels orders with full state cleanup</td><td><div class="cfg-keys"><code>batch_size_for_orders_cleanup</code><code>pick_instruction_cleanup_duration_in_days</code></div></td></tr>
+        <tr><td>Pick Capacity Management</td><td>Calculates and tracks available pick slots per PPS</td><td><div class="cfg-keys"><code>pick_capacity</code><code>system_pick_capacity_config</code></div></td></tr>
+        <tr><td>Order Metrics &amp; Analytics</td><td>Tracks UPH, PBT breach, order events per PPS</td><td><div class="cfg-keys"><code>uph_active</code><code>uph_refresh_interval</code><code>log_order_events</code><code>log_order_manager_function_time</code><code>include_pbt_in_fifo_bin_group_algo</code></div></td></tr>
+      </tbody>
+    </table></div>
+  </div>
+
+  <div class="card" id="g-rack">
+    <div class="card-title"><span class="cat-badge cat-a">Generic</span> Rack Selection &amp; Inventory</div>
+    <div class="tbl-wrap"><table id="t-g-rack">
+      <thead><tr><th>Feature</th><th>Description</th><th>Config Keys</th></tr></thead>
+      <tbody>
+        <tr><td>Rack Selection (Tier A→Stored)</td><td>PPF tier-based cost minimising bot travel; A &gt; A' &gt; B &gt; C &gt; Stored</td><td><div class="cfg-keys"><code>rack_selection_strategy</code><code>rack_tier_weights</code><code>rack_tier_score_mode</code><code>rack_tier_score_bucket_size</code><code>rack_selector_batch_size</code><code>rack_selector_max_workers</code><code>rack_selector_recalc_cooldown_ms</code><code>racks_considered_percentage</code><code>stored_rack_cost_calculation_metric</code><code>enable_rack_count_calc_for_ppf</code></div></td></tr>
+        <tr><td>Rack Transport Costing (IDC)</td><td>Per-rack cost for order-rack combinations using IDC metrics</td><td><div class="cfg-keys"><code>order_proc_idc_multiplier</code><code>order_proc_idc_aplus_multiplier</code><code>idc_cost_unassigned_entity</code><code>idc_max_expected_range</code><code>time_multiplier_idc</code><code>covar_percentage_for_cost_comparison</code><code>rack_penalty_allowed_pps_hops</code><code>rack_penalty_for_cg_breached</code><code>rack_penalty_order_overload_penalty</code><code>rack_penalty_order_overload_threshold</code><code>rack_penalty_pps_overload_penalty</code></div></td></tr>
+        <tr><td>Virtual Aisle Selection</td><td>Aisle-aware rack selection for zone/store picking</td><td><div class="cfg-keys"><code>aisle_awareness_enabled</code><code>aisle_adjacency_map</code><code>aisle_load_bucket_size</code><code>aisle_task_count_limit</code><code>aisle_task_penalty_multiplier</code></div></td></tr>
+        <tr><td>Rack Reshuffling</td><td>Periodically reorders racks to optimise future pick assignments</td><td><div class="cfg-keys"><code>reshuffle_rack_timer_in_ms</code><code>reshuffle_rack_types</code></div></td></tr>
+        <tr><td>Inventory Reservation</td><td>Pre-allocates inventory before dispatch to prevent double-commit</td><td><div class="cfg-keys"><code>skip_cg_check_while_picking</code><code>rack_processable_check</code></div></td></tr>
+        <tr><td>Inventory Awaited Orders</td><td>Holds orders waiting for inbound inventory to arrive</td><td><div class="cfg-keys"><code>inventory_and_order_pool_recreate_timer_in_ms</code></div></td></tr>
+        <tr><td>Inventory Tracking</td><td>Real-time rack slot availability tracked by inventory_tracker_manager</td><td><div class="cfg-keys"><em class="no-cfg">Runtime state; no dedicated config</em></div></td></tr>
+      </tbody>
+    </table></div>
+  </div>
+
+  <div class="card" id="g-picklist">
+    <div class="card-title"><span class="cat-badge cat-a">Generic</span> Picklist &amp; Transport Planning</div>
+    <div class="tbl-wrap"><table id="t-g-picklist">
+      <thead><tr><th>Feature</th><th>Description</th><th>Config Keys</th></tr></thead>
+      <tbody>
+        <tr><td>Picklist Generation</td><td>Builds pick instructions from order + inventory combinations</td><td><div class="cfg-keys"><code>max_combinations_per_orderline</code><code>order_processing_comb_tree_pruning</code><code>order_processing_comb_tree_pruning_limit</code></div></td></tr>
+        <tr><td>Picklist Filtering</td><td>Routes picklists to the correct flow variant / PPS</td><td><div class="cfg-keys"><code>filter_hybrid_fulfillment_orders</code></div></td></tr>
+        <tr><td>Picklist Prioritisation</td><td>Orders items within a picklist for optimal sequence</td><td><div class="cfg-keys"><code>single_multi_orders_prioritize_strategy</code><code>ppf_early_order_optimization</code><code>strategies_using_age_priority</code><code>strategy_to_consider_num_racks</code></div></td></tr>
+        <tr><td>Carrier Validation</td><td>Validates carrier readiness before rack is allowed at station</td><td><div class="cfg-keys"><code>early_bin_alloc_rack_eta_threshold</code><code>inventory_carrier_skip_timer_ms</code><code>order_carrier_skip_timer_ms</code></div></td></tr>
+        <tr><td>Scheduling Cycles</td><td>Allocation cycles with configurable depth and cost limits</td><td><div class="cfg-keys"><code>max_allowed_tasks_per_pps</code><code>process_cutoff_multiplier</code></div></td></tr>
+      </tbody>
+    </table></div>
+  </div>
+
+  <div class="card" id="g-bin">
+    <div class="card-title"><span class="cat-badge cat-a">Generic</span> Bin &amp; Container Management</div>
+    <div class="tbl-wrap"><table id="t-g-bin">
+      <thead><tr><th>Feature</th><th>Description</th><th>Config Keys</th></tr></thead>
+      <tbody>
+        <tr><td>PPS Bin Management</td><td>Full bin lifecycle: allocate → fill → full → clear → release</td><td><div class="cfg-keys"><code>max_orders_per_bin</code><code>percent_of_free_bin_for_order_commit</code><code>late_bin_release</code><code>archive_order_on_bin_clear</code><code>auto_clear_bin</code><code>push_carrier_to_clear_bin</code><code>bin_release_enabled</code></div></td></tr>
+        <tr><td>Bin Volumetric Check</td><td>Validates order fits in bin by physical volume before assignment</td><td><div class="cfg-keys"><code>bin_volumetric_enabled</code><code>ppsbin_volume_threshold_for_pick</code></div></td></tr>
+        <tr><td>Virtual Bin Support</td><td>Dynamic virtual bins for overflow orders and exception resolution</td><td><div class="cfg-keys"><code>dynamic_virtual_bin_enabled</code><code>bot_capacity_for_dynamic_virtual_bin</code><code>exception_resolution_for_vb</code></div></td></tr>
+        <tr><td>Bin Planner</td><td>Assigns multiple orders to shared physical bins using selection strategy</td><td><div class="cfg-keys"><code>bin_selection_strategy</code><code>bin_filtering_logic_threshold_in_min</code><code>static_bin_selection</code><code>threshold_bin_type_skip</code><code>bin_planner_no_order_retry_interval_ms</code><code>bin_planner_filter_observability_enabled</code></div></td></tr>
+        <tr><td>Tote Management</td><td>Tracks tote/carrier lifecycle inside bins; supports auto-reuse and removal</td><td><div class="cfg-keys"><code>totes_required</code><code>pick_tote_association_compulsory</code><code>pick_tote_side</code><code>auto_reuse_tote</code><code>remove_empty_tote</code><code>exclude_rack_types_for_empty_tote_removal</code></div></td></tr>
+        <tr><td>Packing Box</td><td>Physical packing box lifecycle; supports validation and bin-scan-first modes</td><td><div class="cfg-keys"><code>packing_box_required</code><code>packing_box_label</code><code>packing_box_validation_req</code><code>packing_box_validation_type</code><code>packing_box_association_side</code><code>packing_box_bin_scan_first</code></div></td></tr>
+      </tbody>
+    </table></div>
+  </div>
+
+  <div class="card" id="g-operator">
+    <div class="card-title"><span class="cat-badge cat-a">Generic</span> Operator Interaction</div>
+    <div class="tbl-wrap"><table id="t-g-operator">
+      <thead><tr><th>Feature</th><th>Description</th><th>Config Keys</th></tr></thead>
+      <tbody>
+        <tr><td>Item Scan</td><td>Barcode verification of picked items at station</td><td><div class="cfg-keys"><code>entity_scan_required</code><code>pick_entity_scan_required</code><code>no_scan_pick_active</code></div></td></tr>
+        <tr><td>Bin Skip</td><td>Operator can skip current bin (config-gated)</td><td><div class="cfg-keys"><code>bin_skip_enabled</code><code>bin_skip_resolution</code><code>bin_skip_type</code></div></td></tr>
+        <tr><td>Bin Pause</td><td>Operator can temporarily pause current bin</td><td><div class="cfg-keys"><code>bin_pause_enabled</code></div></td></tr>
+        <tr><td>Bin Release</td><td>Operator releases completed bin to downstream</td><td><div class="cfg-keys"><code>bin_release_enabled</code></div></td></tr>
+        <tr><td>Empty Slot Confirmation</td><td>Operator confirms slot is empty; triggers inventory count check</td><td><div class="cfg-keys"><code>enable_inventory_count_check</code><code>inventory_count_check_limit</code></div></td></tr>
+        <tr><td>Label Printing (PPTL)</td><td>Pick-to-tote label printing at pick completion; sync or async</td><td><div class="cfg-keys"><code>pick_print_required</code><code>order_print_required</code><code>print_label_in_sync</code><code>print_while_bin_clear</code><code>no_of_print_copies</code><code>pptl_color_config</code><code>excluded_pptl_color_actions</code><code>master_pptl_enabled</code><code>multiple_reprints_enabled</code><code>enable_single_pptl_press_for_front_bin_clear</code><code>skip_pptl_press</code><code>print_scan_required</code><code>print_actions</code><code>transform_print_data</code></div></td></tr>
+        <tr><td>Show Upcoming Picks</td><td>Displays upcoming / previous pick items at operator UI</td><td><div class="cfg-keys"><code>show_upcoming_pick_list</code><code>show_previous_pick</code><code>pick_front_display_count</code></div></td></tr>
+        <tr><td>One-Step Pick</td><td>Single-action confirm picking without multi-step scan flow</td><td><div class="cfg-keys"><code>one_step_pick</code></div></td></tr>
+        <tr><td>Maintenance Mode</td><td>Pause and resume picking at a station during maintenance</td><td><div class="cfg-keys"><em class="no-cfg">Managed by pick_maintenance_manager; no single config key</em></div></td></tr>
+      </tbody>
+    </table></div>
+  </div>
+
+  <!-- ══ B · FLOW-SPECIFIC ════════════════════════════════════ -->
+  <div class="sec-head" style="margin-top:40px">B · Flow-Specific Features</div>
+  <p style="color:var(--text-2);font-size:12.5px;margin-bottom:20px">Determined by PPS station configuration (<code>post_pick_agent</code>). Each flow encodes its own bin allocation, rack gating, and destination routing.</p>
+
+  <div class="card" id="f-vanilla">
+    <div class="card-title"><span class="cat-badge cat-b">Flow</span> Standard GTP / Vanilla Bin <span class="flow-tag">post_pick_agent: bin</span></div>
+    <div class="tbl-wrap"><table id="t-f-vanilla">
+      <thead><tr><th>Feature</th><th>Description</th><th>Config Keys</th></tr></thead>
+      <tbody>
+        <tr><td>Multi-order per bin</td><td>Multiple orders can share a single physical bin</td><td><div class="cfg-keys"><code>max_orders_per_bin</code><code>bin_packing_fraction</code></div></td></tr>
+        <tr><td>Bin Full Button</td><td>Operator signals bin complete via PPTL press</td><td><div class="cfg-keys"><code>enable_single_pptl_press_for_front_bin_clear</code><code>master_pptl_enabled</code></div></td></tr>
+        <tr><td>Destination wait gate</td><td>Rack release blocked until a bin destination is available</td><td><div class="cfg-keys"><code>percent_of_free_bin_for_order_commit</code><code>streaming_free_bins_or_docks_percent_for_order_commit</code></div></td></tr>
+        <tr><td>Two-stage bin flow</td><td>Supports two-stage bin packing with packing box intermediate step</td><td><div class="cfg-keys"><code>two_stage_bin_enabled</code></div></td></tr>
+        <tr><td>Case-level picking</td><td>Allows picking full cases instead of individual units</td><td><div class="cfg-keys"><code>case_pick_allowed</code></div></td></tr>
+        <tr><td>Partial pick</td><td>Allows committing a partial quantity if full quantity unavailable</td><td><div class="cfg-keys"><code>partial_pick_allowed</code></div></td></tr>
+      </tbody>
+    </table></div>
+  </div>
+
+  <div class="card" id="f-easyloop">
+    <div class="card-title"><span class="cat-badge cat-b">Flow</span> EasyLoop / Single PPS <span class="flow-tag">post_pick_agent: easyloop_bin</span></div>
+    <div class="tbl-wrap"><table id="t-f-easyloop">
+      <thead><tr><th>Feature</th><th>Description</th><th>Config Keys</th></tr></thead>
+      <tbody>
+        <tr><td>HSM vs FSM selection</td><td>PPS-level toggle to use hierarchical vs legacy flat state machine</td><td><div class="cfg-keys"><code>use_hsm_for_pick_front</code><em class="no-cfg" style="margin-left:4px">(PPS-level)</em></div></td></tr>
+        <tr><td>Pick type routing</td><td>Determines which flow variant a station runs</td><td><div class="cfg-keys"><code>pick_type</code><em class="no-cfg" style="margin-left:4px">(PPS-level)</em></div></td></tr>
+        <tr><td>Pick-and-pass</td><td>Enables passing order to next station in the loop</td><td><div class="cfg-keys"><code>pick_and_pass_enabled</code><em class="no-cfg" style="margin-left:4px">(PPS-level)</em></div></td></tr>
+        <tr><td>Flow-specific overrides</td><td>Per-flow config block applied on top of global settings</td><td><div class="cfg-keys"><code>flow_specific_configs</code></div></td></tr>
+      </tbody>
+    </table></div>
+  </div>
+
+  <div class="card" id="f-shuttle">
+    <div class="card-title"><span class="cat-badge cat-b">Flow</span> Shuttle / Looped Relay <span class="flow-tag">post_pick_agent: shuttle</span></div>
+    <div class="tbl-wrap"><table id="t-f-shuttle">
+      <thead><tr><th>Feature</th><th>Description</th><th>Config Keys</th></tr></thead>
+      <tbody>
+        <tr><td>Relay threshold</td><td>Determines when relay vs direct routing is used for carrier dispatch</td><td><div class="cfg-keys"><code>va_relay_threshold</code></div></td></tr>
+        <tr><td>Shuttle induct recheck</td><td>Threshold for rechecking shuttle induct point availability</td><td><div class="cfg-keys"><code>shuttle_induct_point_recheck_threshold</code></div></td></tr>
+        <tr><td>Shuttle debug logging</td><td>Enables verbose logging for shuttle flow state transitions</td><td><div class="cfg-keys"><code>enable_debug_logging_for_shuttle_flow</code></div></td></tr>
+        <tr><td>HTM TPQ integration</td><td>TPQ tolerance and deviation controls for HTM-managed stations</td><td><div class="cfg-keys"><code>htm_tor_tolerance_for_ppf</code><code>htm_deviation_penalty</code><code>htm_deviation_threshold</code><code>ideal_htm_tpq_float</code><code>htm_bots_available</code></div></td></tr>
+        <tr><td>Double-belt retry</td><td>Max retries for double-belt faults before escalating exception</td><td><div class="cfg-keys"><code>double_belt_max_retry_count</code></div></td></tr>
+      </tbody>
+    </table></div>
+  </div>
+
+  <div class="card" id="f-zerowalk">
+    <div class="card-title"><span class="cat-badge cat-b">Flow</span> Zerowalk / RMS / TSORT <span class="flow-tag">post_pick_agent: rms / tsort</span></div>
+    <div class="tbl-wrap"><table id="t-f-zerowalk">
+      <thead><tr><th>Feature</th><th>Description</th><th>Config Keys</th></tr></thead>
+      <tbody>
+        <tr><td>Bin full in zerowalk</td><td>Config-gated operator signal for pre-drop complete</td><td><div class="cfg-keys"><code>enable_bin_full_in_zerowalk</code></div></td></tr>
+        <tr><td>Zerowalk RMS sanity check</td><td>Validates zerowalk/RMS state on HSM initialisation</td><td><div class="cfg-keys"><code>check_zerowalk_rms_sanity</code></div></td></tr>
+        <tr><td>RMS belt dimensions</td><td>Physical belt dimension config for RMS carrier validation</td><td><div class="cfg-keys"><code>rms_belt_dimension</code></div></td></tr>
+        <tr><td>Skip barcode validation</td><td>Bypass barcode check for zerowalk flows where scanning is not required</td><td><div class="cfg-keys"><code>zw_skip_barcodes_validation</code></div></td></tr>
+        <tr><td>MRU flow</td><td>Mobile Rack Unit flow routing and lock behaviour</td><td><div class="cfg-keys"><code>mru_flow</code><code>mru_lock_update_only_for_order_type</code></div></td></tr>
+        <tr><td>MTU / extraction flow</td><td>Mobile Transfer Unit flow with rack-type-specific extraction logic</td><td><div class="cfg-keys"><code>mtu_flow</code><code>extraction_mtu_racktype</code></div></td></tr>
+      </tbody>
+    </table></div>
+  </div>
+
+  <div class="card" id="f-rpick">
+    <div class="card-title"><span class="cat-badge cat-b">Flow</span> RPick / Retail <span class="flow-tag">Separate HSM: rpick_hsm</span></div>
+    <div class="tbl-wrap"><table id="t-f-rpick">
+      <thead><tr><th>Feature</th><th>Description</th><th>Config Keys</th></tr></thead>
+      <tbody>
+        <tr><td>Rack access / deaccess times</td><td>Time cost for ranger to access and deaccess a rack in the aisle</td><td><div class="cfg-keys"><code>rpick_rack_access_time_in_sec</code><code>rpick_rack_deaccess_time_in_sec</code></div></td></tr>
+        <tr><td>Order recalculation delay</td><td>Delay before recalculating order assignments after a change</td><td><div class="cfg-keys"><code>rpick_recalculate_order_wait_delay_ms</code></div></td></tr>
+        <tr><td>Transfer recheck interval</td><td>How often pending item transfers are rechecked</td><td><div class="cfg-keys"><code>rpick_recheck_pending_item_transfer_delay_sec</code></div></td></tr>
+        <tr><td>Default display list</td><td>Default order display list for retail pick UI</td><td><div class="cfg-keys"><code>rpick_default_display_list</code></div></td></tr>
+        <tr><td>Reserve aisle management</td><td>Overcrowding penalty, same-aisle reward, operator cache TTL</td><td><div class="cfg-keys"><code>pick_reserve_aisle_operators_cache_ttl_in_ms</code><code>pick_reserve_aisle_overcrowding_penalty</code><code>pick_reserve_same_aisle_reward</code><code>max_operators_preferred_in_aisle</code></div></td></tr>
+      </tbody>
+    </table></div>
+  </div>
+
+  <div class="card" id="f-autopick">
+    <div class="card-title"><span class="cat-badge cat-b">Flow</span> Autopick <span class="flow-tag">auto_pick_front_server</span></div>
+    <div class="tbl-wrap"><table id="t-f-autopick">
+      <thead><tr><th>Feature</th><th>Description</th><th>Config Keys</th></tr></thead>
+      <tbody>
+        <tr><td>Autopick source</td><td>Source and back-station config for autonomous picking</td><td><div class="cfg-keys"><code>auto_pick_source</code><code>auto_pick_back</code></div></td></tr>
+        <tr><td>Auto sideline on failure</td><td>Automatically sidelined orders when autopick cannot complete</td><td><div class="cfg-keys"><code>auto_sideline_pick</code><code>auto_skip_alert_duration</code></div></td></tr>
+        <tr><td>Republish on failure</td><td>Retries autopick by republishing the message on failure</td><td><div class="cfg-keys"><code>republish_autopick_msg</code><code>max_autopick_republish_count</code></div></td></tr>
+        <tr><td>Agent error popup</td><td>Surfaces agent/bot error to operator UI when autopick fails</td><td><div class="cfg-keys"><code>enable_agent_error_popup</code><code>is_error_popup_disabled</code></div></td></tr>
+      </tbody>
+    </table></div>
+  </div>
+
+  <!-- ══ C · ADVANCED ══════════════════════════════════════════ -->
+  <div class="sec-head" style="margin-top:40px">C · Advanced Features</div>
+  <p style="color:var(--text-2);font-size:12.5px;margin-bottom:20px">Cross-flow capabilities that can be composed with any flow type.</p>
+
+  <div class="card" id="a-uom">
+    <div class="card-title"><span class="cat-badge cat-c">Advanced</span> UOM &amp; Checklist Picking</div>
+    <div class="tbl-wrap"><table id="t-a-uom">
+      <thead><tr><th>Feature</th><th>Description</th><th>Config Keys</th></tr></thead>
+      <tbody>
+        <tr><td>Strict UOM Enforcement</td><td>Enforces exact UOM matching; blocks partial unit commits</td><td><div class="cfg-keys"><code>strict_uom_pick_enabled</code></div></td></tr>
+        <tr><td>UOM Count Suggestion</td><td>System suggests the correct UOM count to the operator</td><td><div class="cfg-keys"><code>enable_uom_count_suggestion</code></div></td></tr>
+        <tr><td>IRT Scan</td><td>Intra-item verification scan within checklist items</td><td><div class="cfg-keys"><code>irt_scan_enabled</code></div></td></tr>
+        <tr><td>UOM Container Break</td><td>Allows splitting containers when UOM requires it</td><td><div class="cfg-keys"><code>uom_container_breakable</code></div></td></tr>
+        <tr><td>UOM Fulfillability Cap</td><td>Upper bounds on UOM quantity that can be fulfilled per order</td><td><div class="cfg-keys"><code>max_uom_fulfillability</code><code>max_uom_quantity_buffer</code></div></td></tr>
+        <tr><td>Merge Same Item UOM</td><td>Merges order lines for same item and UOM to reduce picks</td><td><div class="cfg-keys"><code>merge_same_item_and_uom</code></div></td></tr>
+      </tbody>
+    </table></div>
+  </div>
+
+  <div class="card" id="a-msio">
+    <div class="card-title"><span class="cat-badge cat-c">Advanced</span> MSIO — Multi-SKU Item Operations</div>
+    <div class="tbl-wrap"><table id="t-a-msio">
+      <thead><tr><th>Feature</th><th>Description</th><th>Config Keys</th></tr></thead>
+      <tbody>
+        <tr><td>MSIO enabled</td><td>Enables multi-SKU item operations mode</td><td><div class="cfg-keys"><code>msiob_enabled</code></div></td></tr>
+        <tr><td>MSIO running bin</td><td>Dedicated bin that tracks all MSIO orders in flight</td><td><div class="cfg-keys"><code>msio_running_bin</code></div></td></tr>
+        <tr><td>Bin full default zero</td><td>Whether MSIO bin full defaults to zero committed quantity</td><td><div class="cfg-keys"><code>msio_bin_full_default_zero</code></div></td></tr>
+        <tr><td>Max orders per MSIO bin</td><td>Caps number of MSIO orders in one physical bin</td><td><div class="cfg-keys"><code>max_msiob_order_count</code><code>max_msiob_orders_in_physical_bin</code></div></td></tr>
+        <tr><td>Min release threshold</td><td>Minimum MSIO order count before bin is released downstream</td><td><div class="cfg-keys"><code>min_msiob_order_count</code></div></td></tr>
+        <tr><td>Merge different bin tags</td><td>Allows merging MSIO orders that have different bin tags</td><td><div class="cfg-keys"><code>merge_msio_orders_with_diff_bin_tag</code></div></td></tr>
+        <tr><td>Mutually exclusive tags</td><td>Prevents orders with incompatible tags from sharing the same bin</td><td><div class="cfg-keys"><code>mutually_exclusive_tags_for_msio</code></div></td></tr>
+        <tr><td>MSIO preference cost</td><td>Cost bonus/penalty for prioritising MSIO orders in scheduling</td><td><div class="cfg-keys"><code>pps_task_priority_msio_preference_cost</code></div></td></tr>
+      </tbody>
+    </table></div>
+  </div>
+
+  <div class="card" id="a-tpq">
+    <div class="card-title"><span class="cat-badge cat-c">Advanced</span> TPQ — Task Pool Quality</div>
+    <div class="tbl-wrap"><table id="t-a-tpq">
+      <thead><tr><th>Feature</th><th>Description</th><th>Config Keys</th></tr></thead>
+      <tbody>
+        <tr><td>TPQ enabled</td><td>Enables Task Pool Quality scoring to balance rack assignments across PPS</td><td><div class="cfg-keys"><code>tpq_enabled</code></div></td></tr>
+        <tr><td>Deviation range &amp; penalty</td><td>Allowed deviation from ideal TPQ and penalty when exceeded</td><td><div class="cfg-keys"><code>tpq_allowed_range</code><code>tpq_deviation_bracket_delta</code><code>tpq_deviation_max_bracket</code><code>tpq_deviation_penalty_in_processing</code><code>tpq_weight</code></div></td></tr>
+        <tr><td>Rack count cache</td><td>Caches rack inventory counts for TPQ performance</td><td><div class="cfg-keys"><code>tpq_rack_count_cache_ttl_ms</code><code>rack_count_cache_timer</code></div></td></tr>
+        <tr><td>Recalculation interval</td><td>How often TPQ scores are recalculated</td><td><div class="cfg-keys"><code>tpq_recalculation_interval_ms</code></div></td></tr>
+        <tr><td>Travel time factor</td><td>Return-leg travel time multiplier used in TPQ cost model</td><td><div class="cfg-keys"><code>tpq_travel_time_return_factor</code></div></td></tr>
+        <tr><td>Rack threshold to trigger TPQ</td><td>Minimum rack count before TPQ algorithm activates</td><td><div class="cfg-keys"><code>rack_count_threshold_to_run_tpq</code></div></td></tr>
+        <tr><td>Ideal TPQ targets</td><td>Target TPQ floats for standard, HTM, and VTM station types</td><td><div class="cfg-keys"><code>ideal_tpq_float</code><code>ideal_htm_tpq_float</code><code>ideal_vtm_tpq_float</code><code>largest_tpq_value</code></div></td></tr>
+      </tbody>
+    </table></div>
+  </div>
+
+  <div class="card" id="a-streaming">
+    <div class="card-title"><span class="cat-badge cat-c">Advanced</span> Order Streaming — Advanced Controls</div>
+    <div class="tbl-wrap"><table id="t-a-streaming">
+      <thead><tr><th>Feature</th><th>Description</th><th>Config Keys</th></tr></thead>
+      <tbody>
+        <tr><td>Streaming validation</td><td>Validates orders entering the streaming pipeline</td><td><div class="cfg-keys"><code>enable_streaming_validations</code></div></td></tr>
+        <tr><td>Tier-wise &amp; batch sorting</td><td>Sorts streaming orders by rack tier or in batch groups</td><td><div class="cfg-keys"><code>tier_wise_sorting_in_streaming</code><code>streaming_batch_wise_sorting</code></div></td></tr>
+        <tr><td>Grouptype priority</td><td>Priority ordering for order group types within streaming</td><td><div class="cfg-keys"><code>streaming_grouptype_priority</code></div></td></tr>
+        <tr><td>Dynamic localization</td><td>Learns optimal slot placement for streaming orders over time</td><td><div class="cfg-keys"><code>dynamic_localization_for_streaming</code></div></td></tr>
+        <tr><td>Exclude streaming prioritization</td><td>Skips certain orders from streaming prioritisation logic</td><td><div class="cfg-keys"><code>exclude_streaming_prioritization</code></div></td></tr>
+        <tr><td>TPID resolve at start</td><td>Controls whether TPIDs are resolved when streaming starts</td><td><div class="cfg-keys"><code>skip_resolve_streaming_tpids_at_start</code><code>skip_resolve_tpids_at_start</code><code>tpid_resolver_cores</code></div></td></tr>
+      </tbody>
+    </table></div>
+  </div>
+
+  <div class="card" id="a-vtm">
+    <div class="card-title"><span class="cat-badge cat-c">Advanced</span> VTM — Virtual Tote Management</div>
+    <div class="tbl-wrap"><table id="t-a-vtm">
+      <thead><tr><th>Feature</th><th>Description</th><th>Config Keys</th></tr></thead>
+      <tbody>
+        <tr><td>Aisle switching time</td><td>Time cost (ms) for a ranger to switch between aisles</td><td><div class="cfg-keys"><code>vtm_aisle_switching_ms</code></div></td></tr>
+        <tr><td>Cluster update interval</td><td>How often VTM re-clusters orders into totes</td><td><div class="cfg-keys"><code>vtm_cluster_update_interval_ms</code><code>vtm_assigner_interval_ms</code></div></td></tr>
+        <tr><td>Deviation penalty</td><td>Penalty applied when tote assignment deviates from optimal</td><td><div class="cfg-keys"><code>vtm_deviation_penalty</code><code>vtm_deviation_penalty_in_processing</code><code>vtm_deviation_threshold</code></div></td></tr>
+        <tr><td>Travel time defaults</td><td>Default travel times when actual ETA is unavailable</td><td><div class="cfg-keys"><code>vtm_not_in_aisle_travel_time</code><code>vtm_single_tote_pickup_default_ms</code><code>vtm_single_tote_dropoff_default_ms</code></div></td></tr>
+        <tr><td>Tote capacity</td><td>Maximum picks per virtual tote</td><td><div class="cfg-keys"><code>vtm_tote_capacity</code></div></td></tr>
+        <tr><td>VTM bots &amp; TOR tolerance</td><td>Available bots for VTM and tolerance for pick-face TOR</td><td><div class="cfg-keys"><code>num_vtm_bots</code><code>vtm_tor_tolerance_for_ppf</code></div></td></tr>
+        <tr><td>VTM start IDC time</td><td>Initial IDC time reference used when VTM starts</td><td><div class="cfg-keys"><code>vtm_start_idc_time</code></div></td></tr>
+        <tr><td>Default coverage &amp; UPH</td><td>Default aisle coverage and picks-per-hour for VTM planning</td><td><div class="cfg-keys"><code>default_vtm_aisle_coverage</code><code>default_vtm_picks_per_hour</code></div></td></tr>
+      </tbody>
+    </table></div>
+  </div>
+
+  <div class="card" id="a-cubing">
+    <div class="card-title"><span class="cat-badge cat-c">Advanced</span> Cubing &amp; Volumetric</div>
+    <div class="tbl-wrap"><table id="t-a-cubing">
+      <thead><tr><th>Feature</th><th>Description</th><th>Config Keys</th></tr></thead>
+      <tbody>
+        <tr><td>Container full threshold</td><td>Fraction of container volume at which it is marked full</td><td><div class="cfg-keys"><code>container_full_fraction</code></div></td></tr>
+        <tr><td>Bin packing optimisation</td><td>Fraction used to optimise how tightly items are packed into bins</td><td><div class="cfg-keys"><code>bin_packing_fraction</code></div></td></tr>
+        <tr><td>Break inners / outers</td><td>Allows splitting cases (inners) or pallets (outers) for mixed picks</td><td><div class="cfg-keys"><code>break_inners</code><code>break_outers</code></div></td></tr>
+        <tr><td>Skip dimension check</td><td>Bypasses volumetric dimension validation for specific flows</td><td><div class="cfg-keys"><code>skip_dimension_check</code></div></td></tr>
+        <tr><td>Force fit to bin</td><td>Forces order into bin even if volumetric check would reject it</td><td><div class="cfg-keys"><code>force_fit_order_to_bin</code></div></td></tr>
+        <tr><td>Container put confirmation</td><td>Requires operator confirmation when placing items into container</td><td><div class="cfg-keys"><code>container_put_confirmation</code></div></td></tr>
+      </tbody>
+    </table></div>
+  </div>
+
+  <div class="card" id="a-inventory">
+    <div class="card-title"><span class="cat-badge cat-c">Advanced</span> Advanced Inventory Strategies</div>
+    <div class="tbl-wrap"><table id="t-a-inventory">
+      <thead><tr><th>Feature</th><th>Description</th><th>Config Keys</th></tr></thead>
+      <tbody>
+        <tr><td>Store zone mapping</td><td>Maps orders to physical store zones for zone-aware allocation</td><td><div class="cfg-keys"><code>store_zone_mapping_active</code></div></td></tr>
+        <tr><td>Aisle awareness</td><td>Uses aisle proximity maps to reduce cross-aisle robot travel</td><td><div class="cfg-keys"><code>aisle_awareness_enabled</code><code>aisle_adjacency_map</code></div></td></tr>
+        <tr><td>Piggybacking</td><td>Combines orders onto an existing PPF task to reduce redundant rack trips</td><td><div class="cfg-keys"><code>pbt_to_consider_piggyback_ppf_in_hrs</code></div></td></tr>
+        <tr><td>Movable racks</td><td>Allows racks to be repositioned to different sectors for cost optimisation</td><td><div class="cfg-keys"><code>movable_racks_to_different_sector</code></div></td></tr>
+        <tr><td>IDC unassigned entity cost</td><td>Cost penalty for unassigned entities and tote IDC limit</td><td><div class="cfg-keys"><code>idc_cost_unassigned_entity</code><code>unassigned_tote_idc_limit</code></div></td></tr>
+      </tbody>
+    </table></div>
+  </div>
+
+  <!-- ══ D · EXCEPTIONS ═══════════════════════════════════════ -->
+  <div class="sec-head" style="margin-top:40px">D · Exception &amp; Recovery Features</div>
+
+  <div class="card" id="d-exceptions">
+    <div class="card-title"><span class="cat-badge cat-d">Exception</span> Exception &amp; Recovery</div>
+    <div class="tbl-wrap"><table id="t-d-exceptions">
+      <thead><tr><th>Feature</th><th>Description</th><th>Config Keys</th></tr></thead>
+      <tbody>
+        <tr><td>Carrier change exception</td><td>Handles carrier swap mid-pick; triggers exception flow</td><td><div class="cfg-keys"><code>carrier_change_exception_enabled</code></div></td></tr>
+        <tr><td>Short pick audit</td><td>Audits picks where quantity committed is less than ordered</td><td><div class="cfg-keys"><code>audit_on_short_pick</code></div></td></tr>
+        <tr><td>Partial pick</td><td>Allows committing a partial quantity if full quantity is unavailable</td><td><div class="cfg-keys"><code>partial_pick_allowed</code></div></td></tr>
+        <tr><td>Sideline pending orders</td><td>Automatically sidelined orders with unresolved inventory exceptions</td><td><div class="cfg-keys"><code>sideline_pending_inventory_orders</code></div></td></tr>
+        <tr><td>No-order retry interval</td><td>How long bin planner waits before retrying when no orders are available</td><td><div class="cfg-keys"><code>bin_planner_no_order_retry_interval_ms</code></div></td></tr>
+        <tr><td>Carrier skip timer</td><td>Timeout before skipping a carrier that has not arrived at station</td><td><div class="cfg-keys"><code>inventory_carrier_skip_timer_ms</code><code>order_carrier_skip_timer_ms</code></div></td></tr>
+        <tr><td>Auto-undock on exception</td><td>Automatically undocks MRU/MTU when an exception is raised</td><td><div class="cfg-keys"><code>auto_undock_mru</code><code>auto_undock_mtu</code></div></td></tr>
+        <tr><td>Remove blocked racks</td><td>Periodic cron that removes racks flagged as permanently blocked</td><td><div class="cfg-keys"><code>remove_blocked_racks_cron_ms</code></div></td></tr>
+        <tr><td>RC order matching</td><td>Defines how return-to-carrier orders are matched and handled</td><td><div class="cfg-keys"><code>order_rc_mapping_behaviour</code><code>rc_order_matchers_keys</code></div></td></tr>
+        <tr><td>MSLO enabled</td><td>Multi-Slot Location Operations — handles multi-slot exception resolution</td><td><div class="cfg-keys"><code>mslo_enabled</code></div></td></tr>
+      </tbody>
+    </table></div>
+  </div>
+
+  <!-- ── CAVEAT ─────────────────────────────────────────────── -->
+  <div class="caveat">
+    <div class="caveat-label">Key Observation</div>
+    <p>~280 of the 385 config keys map directly to specific features. The remaining ~100 are infrastructure/logging/URL configs (<code>influx_url</code>, <code>gmc_base_url</code>, <code>log_*</code>, etc.) that don't correspond to a single feature but support observability and integration.</p>
+  </div>
+
+</main>
+</div><!-- body -->
+</div><!-- shell -->
+
+<script>
+// ── Sidebar active tracking ──────────────────────────────────
+const cards = document.querySelectorAll('.card[id]');
+const links  = document.querySelectorAll('.sb-link');
+const obs = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      links.forEach(l => l.classList.remove('active'));
+      const a = document.querySelector(`.sb-link[href="#${e.target.id}"]`);
+      if (a) { a.classList.add('active'); a.scrollIntoView({block:'nearest'}); }
+    }
+  });
+}, {rootMargin:'-20% 0px -70% 0px'});
+cards.forEach(c => obs.observe(c));
+
+// ── Search / filter ──────────────────────────────────────────
+function filterAll(q) {
+  q = q.trim().toLowerCase();
+  let visible = 0;
+  document.querySelectorAll('tbody tr').forEach(tr => {
+    const text = tr.textContent.toLowerCase();
+    const match = !q || text.includes(q);
+    tr.classList.toggle('hidden', !match);
+    if (match) visible++;
+    if (q) {
+      tr.querySelectorAll('td').forEach(td => {
+        td.innerHTML = td.innerHTML.replace(/<mark>/g,'').replace(/<\/mark>/g,'');
+        if (q) highlightNode(td, q);
+      });
+    }
+  });
+  document.getElementById('search-count').textContent = q ? `${visible} rows` : '';
+}
+
+function highlightNode(node, q) {
+  node.childNodes.forEach(child => {
+    if (child.nodeType === 3) {
+      const idx = child.textContent.toLowerCase().indexOf(q);
+      if (idx >= 0) {
+        const span = document.createElement('span');
+        span.innerHTML =
+          escHtml(child.textContent.slice(0, idx)) +
+          '<mark>' + escHtml(child.textContent.slice(idx, idx + q.length)) + '</mark>' +
+          escHtml(child.textContent.slice(idx + q.length));
+        child.replaceWith(span);
+      }
+    } else if (child.nodeType === 1 && child.tagName !== 'MARK') {
+      highlightNode(child, q);
+    }
+  });
+}
+function escHtml(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+</script>
+</body>
+</html>

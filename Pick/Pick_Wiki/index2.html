@@ -11,8 +11,8 @@
   --accent-d:  #1B3D62;
   --accent-t:  #6AABEC;
   --text:      #C8D8E8;
-  --text-2:    #A0BCCE;
-  --text-3:    #8899AA;
+  --text-2:    #6E8CAA;
+  --text-3:    #3A5068;
   --green:     #2D7A58;
   --green-t:   #5FBFA0;
   --amber:     #A07028;
@@ -83,7 +83,7 @@ html, body {
 .tabbar {
   flex-shrink: 0;
   display: flex;
-  background: var(--bg);
+  background: var(--s1);
   border-bottom: 1px solid var(--border);
   padding: 0 24px;
   overflow-x: auto;
@@ -97,21 +97,17 @@ html, body {
   font-weight: 500;
   letter-spacing: 0.04em;
   color: var(--text-3);
-  padding: 10px 16px;
-  margin: 6px 3px 0;
+  padding: 12px 16px;
   cursor: pointer;
-  border-radius: 4px 4px 0 0;
   border-bottom: 2px solid transparent;
-  background: #4A3525;
   white-space: nowrap;
-  transition: color 0.12s, background 0.12s;
+  transition: color 0.12s;
   user-select: none;
 }
-.tab:hover { color: var(--text-2); background: #5C4030; }
+.tab:hover { color: var(--text-2); }
 .tab.active {
   color: var(--accent-t);
   border-bottom-color: var(--accent);
-  background: #6B4C35;
 }
 
 /* ── CONTENT ────────────────────────────────────────────────── */
@@ -558,13 +554,11 @@ details[open] summary { color: var(--accent-t); }
   <nav class="tabbar" role="tablist">
     <button class="tab active" onclick="show('overview',this)">OVERVIEW</button>
     <button class="tab" onclick="show('types',this)">PICK TYPES</button>
-    <button class="tab" onclick="show('pickflows',this)">PICK FLOWS</button>
-    <button class="tab" onclick="show('features',this)">FEATURES</button>
-    <button class="tab" onclick="show('config',this)">CONFIG &amp; CACHES</button>
+    <button class="tab" onclick="show('flows',this)">FLOWS &amp; FSMs</button>
     <button class="tab" onclick="show('stations',this)">STATIONS</button>
     <button class="tab" onclick="show('models',this)">DATA MODELS</button>
-    <button class="tab" onclick="show('flows',this)">FSMs</button>
     <button class="tab" onclick="show('kafka',this)">KAFKA EVENTS</button>
+    <button class="tab" onclick="show('config',this)">CONFIG &amp; CACHES</button>
     <button class="tab" onclick="show('testing',this)">TESTING</button>
   </nav>
 
@@ -849,167 +843,6 @@ details[open] summary { color: var(--accent-t); }
       </div>
     </section>
 
-    <!-- ══ PICK FLOWS ═══════════════════════════════════════════ -->
-    <section id="pane-pickflows" class="pane">
-      <div class="sec-head">Pick Flows — Functional Overview</div>
-
-      <div class="card">
-        <div class="card-title">How flows are determined</div>
-        <p style="color:var(--text-2);font-size:13px;line-height:1.7;margin-bottom:10px">Pick flows are determined by <strong style="color:var(--text)">PPS station configuration</strong> (<code style="font-family:var(--mono);font-size:11px;background:var(--s2);padding:1px 5px;border-radius:3px">post_pick_agent</code>), not by order type. Each flow encodes its own bin allocation strategy, rack gating logic, and post-pick destination routing. The same order can run through different flows depending on which station picks it.</p>
-        <div class="tbl-wrap"><table>
-          <thead><tr><th>Flow</th><th>post_pick_agent</th><th>State Machine</th><th>Topology</th></tr></thead>
-          <tbody>
-            <tr><td>Standard GTP</td><td><code style="font-family:var(--mono);font-size:11px;background:var(--s2);padding:1px 5px;border-radius:3px">bin</code></td><td>pick_front_hsm / pick_front_fsm</td><td>Bot → PPS → Bin → Belt</td></tr>
-            <tr><td>EasyLoop</td><td><code style="font-family:var(--mono);font-size:11px;background:var(--s2);padding:1px 5px;border-radius:3px">easyloop_bin</code></td><td>pick_front_single_pps_hsm</td><td>Carousel → Single PPS → Loop</td></tr>
-            <tr><td>Shuttle / Relay</td><td><code style="font-family:var(--mono);font-size:11px;background:var(--s2);padding:1px 5px;border-radius:3px">shuttle</code></td><td>pick_front_hsm (looped variant)</td><td>Bot → PPS → Shuttle Tray → Consolidation</td></tr>
-            <tr><td>Zerowalk / TSORT</td><td><code style="font-family:var(--mono);font-size:11px;background:var(--s2);padding:1px 5px;border-radius:3px">tsort</code></td><td>pick_front_hsm</td><td>Bot → PPS → Sortation Chute</td></tr>
-            <tr><td>RMS</td><td><code style="font-family:var(--mono);font-size:11px;background:var(--s2);padding:1px 5px;border-radius:3px">rms</code></td><td>pick_front_hsm</td><td>Deep Storage → PPS → Forward Area</td></tr>
-            <tr><td>RPick / Retail</td><td>N/A (separate HSM)</td><td>rpick_hsm</td><td>Ranger → Aisle → Rollcage → Transfer</td></tr>
-          </tbody>
-        </table></div>
-      </div>
-
-      <!-- Flow 1 -->
-      <div class="card">
-        <div class="card-title" style="color:var(--accent-t)">① Standard GTP — Vanilla Bin</div>
-        <p style="color:var(--text-2);font-size:13px;line-height:1.7;margin-bottom:12px">The most common flow. Autonomous bots transport racks to a PPS station. An operator scans slots, picks items into pre-allocated bins, and signals completion. Bins exit on a consolidation belt for downstream dispatch.</p>
-        <div class="tbl-wrap"><table>
-          <thead><tr><th>Aspect</th><th>Detail</th></tr></thead>
-          <tbody>
-            <tr><td>Bin allocation</td><td>Pre-allocated by bin_planner; multiple orders can share one bin</td></tr>
-            <tr><td>Rack gating</td><td>Rack release blocked until a bin destination is available (<code style="font-family:var(--mono);font-size:11px;background:var(--s2);padding:1px 5px;border-radius:3px">is_pick_possible/2</code>)</td></tr>
-            <tr><td>Throughput model</td><td>High-velocity short picks; optimised for UPH via rack tier selection</td></tr>
-            <tr><td>Destination</td><td>Consolidation belt → ship lane</td></tr>
-            <tr><td>Bin signal</td><td>Operator presses PPTL (Pick-to-Tote Light) when bin is full</td></tr>
-            <tr><td>Optional features</td><td>Two-stage bin, case-level picking, partial pick, packing box, MSIO</td></tr>
-            <tr><td>Use case</td><td>Standard e-commerce fulfilment — high variety, low quantity per SKU</td></tr>
-          </tbody>
-        </table></div>
-      </div>
-
-      <!-- Flow 2 -->
-      <div class="card">
-        <div class="card-title" style="color:var(--accent-t)">② EasyLoop — Single PPS Carousel</div>
-        <p style="color:var(--text-2);font-size:13px;line-height:1.7;margin-bottom:12px">A carousel/relay model where a single PPS station cycles racks continuously. The system (HTM) owns destination allocation rather than the operator. Designed for very high-velocity environments where manual bin assignment would become a bottleneck.</p>
-        <div class="tbl-wrap"><table>
-          <thead><tr><th>Aspect</th><th>Detail</th></tr></thead>
-          <tbody>
-            <tr><td>Bin allocation</td><td>System-managed (HTM-orchestrated); one order per slot</td></tr>
-            <tr><td>Station topology</td><td>Single PPS — racks cycle in a closed loop back to the same station</td></tr>
-            <tr><td>Throughput model</td><td>Sustained high UPH; no pause between rack arrivals</td></tr>
-            <tr><td>Destination</td><td>Fixed relay lane managed by HTM</td></tr>
-            <tr><td>Optional features</td><td>Pick-and-pass (pass order to next station in loop)</td></tr>
-            <tr><td>Use case</td><td>High-volume retail or grocery fulfilment (e.g. Walmart-style)</td></tr>
-          </tbody>
-        </table></div>
-      </div>
-
-      <!-- Flow 3 -->
-      <div class="card">
-        <div class="card-title" style="color:var(--accent-t)">③ Shuttle / Looped Relay</div>
-        <p style="color:var(--text-2);font-size:13px;line-height:1.7;margin-bottom:12px">Items are picked onto shuttle trays that move via conveyor to consolidation points. A single shuttle carrier can hold multiple orders. The flow includes shuttle-specific carrier validation, pre-drop level checks, and belt exception handling.</p>
-        <div class="tbl-wrap"><table>
-          <thead><tr><th>Aspect</th><th>Detail</th></tr></thead>
-          <tbody>
-            <tr><td>Bin allocation</td><td>Tray managed by shuttle system; system-allocated destinations</td></tr>
-            <tr><td>Station topology</td><td>Multiple PPS stations share a looped shuttle conveyor</td></tr>
-            <tr><td>Throughput model</td><td>Speed-optimised; conveyor removes human wait time between picks</td></tr>
-            <tr><td>Destination</td><td>Shuttle consolidation point → dispatch</td></tr>
-            <tr><td>Exception handling</td><td>Dedicated shuttle carrier exception node (belt faults, level-order mapping)</td></tr>
-            <tr><td>Use case</td><td>Apparel, footwear — tray-based high-speed systems</td></tr>
-          </tbody>
-        </table></div>
-      </div>
-
-      <!-- Flow 4 -->
-      <div class="card">
-        <div class="card-title" style="color:var(--accent-t)">④ Zerowalk / TSORT — Sortation-Driven</div>
-        <p style="color:var(--text-2);font-size:13px;line-height:1.7;margin-bottom:12px">Items are picked directly into sortation chutes or trays without a relay mechanic. The "pre-drop" model means the operator signals placement on the rack slot itself (zerowalk) or into a sort chute (TSORT). Post-pick destination routes straight to a sortation system.</p>
-        <div class="tbl-wrap"><table>
-          <thead><tr><th>Aspect</th><th>Detail</th></tr></thead>
-          <tbody>
-            <tr><td>Bin allocation</td><td>Sort chute or pre-drop slot; no traditional bin</td></tr>
-            <tr><td>Station topology</td><td>Bots bring racks; items placed in sort chute at PPS</td></tr>
-            <tr><td>Throughput model</td><td>Sortation-enabled; downstream sorter handles order consolidation</td></tr>
-            <tr><td>Destination</td><td>Sortation lanes → packing</td></tr>
-            <tr><td>Optional features</td><td>Zerowalk bin-full signal, barcode validation bypass, RMS belt dimensions</td></tr>
-            <tr><td>Use case</td><td>Sort-to-tote fulfilment; facilities with sorter infrastructure</td></tr>
-          </tbody>
-        </table></div>
-      </div>
-
-      <!-- Flow 5 -->
-      <div class="card">
-        <div class="card-title" style="color:var(--accent-t)">⑤ RMS — Reserve Management System</div>
-        <p style="color:var(--text-2);font-size:13px;line-height:1.7;margin-bottom:12px">Orders pull inventory from deep-storage or reserve racks into the forward picking area. Primarily used for stock rotation and replenishing forward-area slots when they run low. Has its own destination node and picklist filter.</p>
-        <div class="tbl-wrap"><table>
-          <thead><tr><th>Aspect</th><th>Detail</th></tr></thead>
-          <tbody>
-            <tr><td>Bin allocation</td><td>Reserve bin; allocated for inbound replenishment</td></tr>
-            <tr><td>Station topology</td><td>Deep storage → PPS → induction queue for forward area</td></tr>
-            <tr><td>Throughput model</td><td>Replenishment-focused; not optimised for unit throughput</td></tr>
-            <tr><td>Destination</td><td>Forward-area induction → slot replenishment</td></tr>
-            <tr><td>Use case</td><td>DOH management; preventing stockouts in forward picking area</td></tr>
-          </tbody>
-        </table></div>
-      </div>
-
-      <!-- Flow 6 -->
-      <div class="card">
-        <div class="card-title" style="color:var(--accent-t)">⑥ RPick — Retail / Reserve Pick</div>
-        <p style="color:var(--text-2);font-size:13px;line-height:1.7;margin-bottom:12px">A completely separate HSM (<code style="font-family:var(--mono);font-size:11px;background:var(--s2);padding:1px 5px;border-radius:3px">rpick_hsm</code>) for reserve-area picking where rangers physically walk aisles rather than bots bringing racks. Rollcage-based, with item/container scanning, transfer request handling, and dedicated analytics.</p>
-        <div class="tbl-wrap"><table>
-          <thead><tr><th>Aspect</th><th>Detail</th></tr></thead>
-          <tbody>
-            <tr><td>Bin allocation</td><td>Rollcage bins; ranger walks aisle and fills rollcage</td></tr>
-            <tr><td>Station topology</td><td>No bots — ranger navigates reserve aisles autonomously</td></tr>
-            <tr><td>Throughput model</td><td>Verification-focused; accuracy over speed</td></tr>
-            <tr><td>Destination</td><td>Rollcage → transfer to forward area or audit queue</td></tr>
-            <tr><td>Scanning</td><td>Item barcode + container barcode + post-pick clean scan</td></tr>
-            <tr><td>Transfer requests</td><td>Checks pending inter-aisle transfer requests before each pick</td></tr>
-            <tr><td>Analytics</td><td>Dedicated rpick_analytics_manager tracks ranger UPH and variance</td></tr>
-            <tr><td>Use case</td><td>Stock rotation, variance reconciliation, reserve area replenishment</td></tr>
-          </tbody>
-        </table></div>
-      </div>
-
-      <!-- FSM vs HSM -->
-      <div class="card">
-        <div class="card-title">FSM vs HSM — Architecture</div>
-        <p style="color:var(--text-2);font-size:13px;line-height:1.7;margin-bottom:12px">Both coexist — it is not a full migration. FSMs remain active for PPS configurations that have not been moved to the HSM path.</p>
-        <div class="tbl-wrap"><table>
-          <thead><tr><th></th><th>FSM (Legacy)</th><th>HSM (Current)</th></tr></thead>
-          <tbody>
-            <tr><td>Modules</td><td>pick_front_fsm, pick_back_fsm, rc_pick_back_fsm</td><td>pick_front_hsm, pick_front_single_pps_hsm, rpick_hsm</td></tr>
-            <tr><td>Structure</td><td>Flat — all ~30 states in one module</td><td>Hierarchical — each state is its own node module</td></tr>
-            <tr><td>Transitions</td><td>gen_statem callbacks with explicit state functions</td><td>Node graph via <code style="font-family:var(--mono);font-size:11px;background:var(--s2);padding:1px 5px;border-radius:3px">{subproc, NextNode, …}</code></td></tr>
-            <tr><td>Exception handling</td><td>Inline in state functions</td><td>Dedicated exception node subtrees per flow type</td></tr>
-            <tr><td>Status</td><td>Active for legacy PPS configs</td><td>Preferred for all new flows and station types</td></tr>
-            <tr><td>Toggle</td><td colspan="2">Per-PPS via <code style="font-family:var(--mono);font-size:11px;background:var(--s2);padding:1px 5px;border-radius:3px">use_hsm_for_pick_front</code> config key</td></tr>
-          </tbody>
-        </table></div>
-      </div>
-
-      <!-- Cross-cutting features -->
-      <div class="card">
-        <div class="card-title">Cross-Flow Features</div>
-        <p style="color:var(--text-2);font-size:13px;line-height:1.7;margin-bottom:12px">These features can be enabled independently of flow type and compose with any of the six flows above.</p>
-        <div class="tbl-wrap"><table>
-          <thead><tr><th>Feature</th><th>What it does</th><th>Key config</th></tr></thead>
-          <tbody>
-            <tr><td>TPQ (Task Pool Quality)</td><td>Balances rack assignments across PPS stations by scoring queue depth</td><td><code style="font-family:var(--mono);font-size:11px;background:var(--s2);padding:1px 5px;border-radius:3px">tpq_enabled</code></td></tr>
-            <tr><td>PPF Rack Tiers</td><td>Prioritises racks already near the assigned PPS to minimise bot travel</td><td><code style="font-family:var(--mono);font-size:11px;background:var(--s2);padding:1px 5px;border-radius:3px">rack_selection_strategy</code></td></tr>
-            <tr><td>Order Streaming</td><td>Continuously pushes orders into forward queue for steady-state throughput</td><td><code style="font-family:var(--mono);font-size:11px;background:var(--s2);padding:1px 5px;border-radius:3px">streaming_orders</code></td></tr>
-            <tr><td>MSIO</td><td>Multi-SKU item operations — dedicated running bin for complex multi-SKU orders</td><td><code style="font-family:var(--mono);font-size:11px;background:var(--s2);padding:1px 5px;border-radius:3px">msiob_enabled</code></td></tr>
-            <tr><td>UOM / Checklist</td><td>Multi-level item scan verification — flat (count) or nested (LPN/lot)</td><td><code style="font-family:var(--mono);font-size:11px;background:var(--s2);padding:1px 5px;border-radius:3px">strict_uom_pick_enabled</code></td></tr>
-            <tr><td>Tote / Packing Box</td><td>Tracks physical carriers inside bins; supports virtual bins and auto-reuse</td><td><code style="font-family:var(--mono);font-size:11px;background:var(--s2);padding:1px 5px;border-radius:3px">totes_required</code></td></tr>
-            <tr><td>PPTL / Printing</td><td>Pick-to-tote label printing at completion; scan-to-confirm option</td><td><code style="font-family:var(--mono);font-size:11px;background:var(--s2);padding:1px 5px;border-radius:3px">pick_print_required</code></td></tr>
-            <tr><td>VTM</td><td>Virtual Tote Management — clusters orders into optimal virtual totes for rangers</td><td><code style="font-family:var(--mono);font-size:11px;background:var(--s2);padding:1px 5px;border-radius:3px">vtm_tote_capacity</code></td></tr>
-          </tbody>
-        </table></div>
-      </div>
-    </section>
-
     <!-- ══ FLOWS ════════════════════════════════════════════════ -->
     <section id="pane-flows" class="pane">
       <div class="sec-head">Flows &amp; State Machines</div>
@@ -1119,257 +952,6 @@ details[open] summary { color: var(--accent-t); }
           <span class="badge b-dim">sidelining</span>
         </div>
         <p style="margin-top:10px">Handlers: <code>handle_exception_node</code>, <code>slot_pick_exception_node</code>, <code>checklist_exception_node</code>, <code>shuttle_carrier_exception_node</code>.</p>
-      </div>
-    </section>
-
-    <!-- ══ FEATURES ════════════════════════════════════════════ -->
-    <section id="pane-features" class="pane">
-      <div class="sec-head">Pick Module — Features Reference</div>
-
-      <div class="card">
-        <div class="card-title">A · Generic Features — Order Management &amp; Scheduling</div>
-        <div class="tbl-wrap"><table><thead><tr><th>Feature</th><th>Description</th><th>Config Keys</th></tr></thead><tbody>
-          <tr><td>Order Processing</td><td>Core lifecycle management: add → allocate → complete → cancel</td><td><code>auto_order_processing_interval</code> <code>order_auto_release</code> <code>safe_mode_for_order_manager</code></td></tr>
-          <tr><td>Order Allocation</td><td>Assigns orders to PPS based on priority, SLA, and throughput goals</td><td><code>task_prioritization_algo</code> <code>order_processing_cores</code> <code>order_processing_cost_limit</code> <code>order_processing_min_loop_timeout</code> <code>find_best_cost_orders_depth</code></td></tr>
-          <tr><td>PBT Management</td><td>Pick-By-Time SLA enforcement and breach detection</td><td><code>pbt_offset_in_seconds</code> <code>pbt_system_time_buffer</code> <code>pbt_waving_window</code> <code>non_pbt_waving_window</code> <code>pps_task_priority_consider_pbt_breach</code> <code>prioritize_orders_post_breach</code></td></tr>
-          <tr><td>PAT Handling</td><td>Holds orders until Pick-After-Time window opens; handled in order_manager logic</td><td><em style="color:var(--text-2)">No dedicated config key</em></td></tr>
-          <tr><td>Order Streaming</td><td>Continuous order flow pipeline for high-throughput steady-state picking</td><td><code>streaming_orders</code> <code>streaming_order_batch_size</code> <code>streaming_bin_size</code> <code>streaming_bin_tags</code> <code>streaming_pps_list</code> <code>streaming_volumetric_fraction</code> <code>streaming_item_expiry_time</code> <code>max_streaming_orders</code> <code>min_streaming_orders</code> <code>order_streaming_cores</code> <code>streaming_free_bins_or_docks_percent_for_order_commit</code> <code>streaming_order_pick_in_sequence</code></td></tr>
-          <tr><td>Sorted Order Queue</td><td>Priority queue for scheduler allocation cycles</td><td><code>is_prioritize_required</code> <code>is_pps_task_priority_fifo</code> <code>priority_sequence_range</code></td></tr>
-          <tr><td>Pick Scheduling Cycles</td><td>~20 allocation cycles per PPS; each cycle can use different selection criteria</td><td><code>max_allowed_tasks_per_pps</code> <code>max_qty_per_pick_cycle</code> <code>ppstask_cost_increment_on_pps_close</code></td></tr>
-          <tr><td>Order Modification</td><td>Supports qty/bin changes to orders mid-flight</td><td><code>simple_group_permissible_change</code> <code>simple_to_order_priority</code></td></tr>
-          <tr><td>Order Cancellation</td><td>Cancels orders with full state cleanup</td><td><code>batch_size_for_orders_cleanup</code> <code>pick_instruction_cleanup_duration_in_days</code></td></tr>
-          <tr><td>Pick Capacity Management</td><td>Calculates and tracks available pick slots per PPS</td><td><code>pick_capacity</code> <code>system_pick_capacity_config</code></td></tr>
-          <tr><td>Order Metrics &amp; Analytics</td><td>Tracks UPH, PBT breach, order events per PPS</td><td><code>uph_active</code> <code>uph_refresh_interval</code> <code>log_order_events</code> <code>log_order_manager_function_time</code> <code>include_pbt_in_fifo_bin_group_algo</code></td></tr>
-        </tbody></table></div>
-      </div>
-
-      <div class="card">
-        <div class="card-title">A · Generic Features — Rack Selection &amp; Inventory</div>
-        <div class="tbl-wrap"><table><thead><tr><th>Feature</th><th>Description</th><th>Config Keys</th></tr></thead><tbody>
-          <tr><td>Rack Selection (Tier A→Stored)</td><td>PPF tier-based cost system minimising bot travel; A &gt; A' &gt; B &gt; C &gt; Stored</td><td><code>rack_selection_strategy</code> <code>rack_tier_weights</code> <code>rack_tier_score_mode</code> <code>rack_tier_score_bucket_size</code> <code>rack_selector_batch_size</code> <code>rack_selector_max_workers</code> <code>rack_selector_recalc_cooldown_ms</code> <code>racks_considered_percentage</code> <code>stored_rack_cost_calculation_metric</code> <code>enable_rack_count_calc_for_ppf</code></td></tr>
-          <tr><td>Rack Transport Costing (IDC)</td><td>Per-rack cost calculation for order-rack combinations using IDC metrics</td><td><code>order_proc_idc_multiplier</code> <code>order_proc_idc_aplus_multiplier</code> <code>idc_cost_unassigned_entity</code> <code>idc_max_expected_range</code> <code>time_multiplier_idc</code> <code>covar_percentage_for_cost_comparison</code> <code>rack_penalty_allowed_pps_hops</code> <code>rack_penalty_for_cg_breached</code> <code>rack_penalty_order_overload_penalty</code> <code>rack_penalty_order_overload_threshold</code> <code>rack_penalty_pps_overload_penalty</code></td></tr>
-          <tr><td>Virtual Aisle Selection</td><td>Aisle-aware rack selection for zone/store picking</td><td><code>aisle_awareness_enabled</code> <code>aisle_adjacency_map</code> <code>aisle_load_bucket_size</code> <code>aisle_task_count_limit</code> <code>aisle_task_penalty_multiplier</code></td></tr>
-          <tr><td>Rack Reshuffling</td><td>Periodically reorders racks to optimise future pick assignments</td><td><code>reshuffle_rack_timer_in_ms</code> <code>reshuffle_rack_types</code></td></tr>
-          <tr><td>Inventory Reservation</td><td>Pre-allocates inventory before dispatch to prevent double-commit</td><td><code>skip_cg_check_while_picking</code> <code>rack_processable_check</code></td></tr>
-          <tr><td>Inventory Awaited Orders</td><td>Holds orders waiting for inbound inventory to arrive</td><td><code>inventory_and_order_pool_recreate_timer_in_ms</code></td></tr>
-          <tr><td>Inventory Tracking</td><td>Real-time rack slot availability tracked by inventory_tracker_manager</td><td><em style="color:var(--text-2)">Runtime state; no dedicated config</em></td></tr>
-        </tbody></table></div>
-      </div>
-
-      <div class="card">
-        <div class="card-title">A · Generic Features — Picklist &amp; Transport Planning</div>
-        <div class="tbl-wrap"><table><thead><tr><th>Feature</th><th>Description</th><th>Config Keys</th></tr></thead><tbody>
-          <tr><td>Picklist Generation</td><td>Builds pick instructions from order + inventory combinations</td><td><code>max_combinations_per_orderline</code> <code>order_processing_comb_tree_pruning</code> <code>order_processing_comb_tree_pruning_limit</code></td></tr>
-          <tr><td>Picklist Filtering</td><td>Routes picklists to the correct flow variant / PPS</td><td><code>filter_hybrid_fulfillment_orders</code></td></tr>
-          <tr><td>Picklist Prioritisation</td><td>Orders items within a picklist for optimal sequence</td><td><code>single_multi_orders_prioritize_strategy</code> <code>ppf_early_order_optimization</code> <code>strategies_using_age_priority</code> <code>strategy_to_consider_num_racks</code></td></tr>
-          <tr><td>Carrier Validation</td><td>Validates carrier readiness before rack is allowed at station</td><td><code>early_bin_alloc_rack_eta_threshold</code> <code>inventory_carrier_skip_timer_ms</code> <code>order_carrier_skip_timer_ms</code></td></tr>
-          <tr><td>Scheduling Cycles</td><td>Allocation cycles with configurable depth and cost limits</td><td><code>max_allowed_tasks_per_pps</code> <code>process_cutoff_multiplier</code></td></tr>
-        </tbody></table></div>
-      </div>
-
-      <div class="card">
-        <div class="card-title">A · Generic Features — Bin &amp; Container Management</div>
-        <div class="tbl-wrap"><table><thead><tr><th>Feature</th><th>Description</th><th>Config Keys</th></tr></thead><tbody>
-          <tr><td>PPS Bin Management</td><td>Full bin lifecycle: allocate → fill → full → clear → release</td><td><code>max_orders_per_bin</code> <code>percent_of_free_bin_for_order_commit</code> <code>late_bin_release</code> <code>archive_order_on_bin_clear</code> <code>auto_clear_bin</code> <code>push_carrier_to_clear_bin</code> <code>bin_release_enabled</code></td></tr>
-          <tr><td>Bin Volumetric Check</td><td>Validates order fits in bin by physical volume before assignment</td><td><code>bin_volumetric_enabled</code> <code>ppsbin_volume_threshold_for_pick</code></td></tr>
-          <tr><td>Virtual Bin Support</td><td>Dynamic virtual bins for overflow orders and exception resolution</td><td><code>dynamic_virtual_bin_enabled</code> <code>bot_capacity_for_dynamic_virtual_bin</code> <code>exception_resolution_for_vb</code></td></tr>
-          <tr><td>Bin Planner</td><td>Assigns multiple orders to shared physical bins using selection strategy</td><td><code>bin_selection_strategy</code> <code>bin_filtering_logic_threshold_in_min</code> <code>static_bin_selection</code> <code>threshold_bin_type_skip</code> <code>bin_planner_no_order_retry_interval_ms</code> <code>bin_planner_filter_observability_enabled</code></td></tr>
-          <tr><td>Tote Management</td><td>Tracks tote/carrier lifecycle inside bins; supports auto-reuse and removal</td><td><code>totes_required</code> <code>pick_tote_association_compulsory</code> <code>pick_tote_side</code> <code>auto_reuse_tote</code> <code>remove_empty_tote</code> <code>exclude_rack_types_for_empty_tote_removal</code></td></tr>
-          <tr><td>Packing Box</td><td>Physical packing box lifecycle inside bins; supports validation and scanning</td><td><code>packing_box_required</code> <code>packing_box_label</code> <code>packing_box_validation_req</code> <code>packing_box_validation_type</code> <code>packing_box_association_side</code> <code>packing_box_bin_scan_first</code></td></tr>
-        </tbody></table></div>
-      </div>
-
-      <div class="card">
-        <div class="card-title">A · Generic Features — Operator Interaction</div>
-        <div class="tbl-wrap"><table><thead><tr><th>Feature</th><th>Description</th><th>Config Keys</th></tr></thead><tbody>
-          <tr><td>Item Scan</td><td>Barcode verification of picked items at station</td><td><code>entity_scan_required</code> <code>pick_entity_scan_required</code> <code>no_scan_pick_active</code></td></tr>
-          <tr><td>Bin Skip</td><td>Operator can skip current bin (config-gated)</td><td><code>bin_skip_enabled</code> <code>bin_skip_resolution</code> <code>bin_skip_type</code></td></tr>
-          <tr><td>Bin Pause</td><td>Operator can temporarily pause current bin</td><td><code>bin_pause_enabled</code></td></tr>
-          <tr><td>Bin Release</td><td>Operator releases completed bin to downstream</td><td><code>bin_release_enabled</code></td></tr>
-          <tr><td>Empty Slot Confirmation</td><td>Operator confirms slot is empty; triggers inventory count check</td><td><code>enable_inventory_count_check</code> <code>inventory_count_check_limit</code></td></tr>
-          <tr><td>Label Printing (PPTL)</td><td>Pick-to-tote label printing at pick completion; sync or async</td><td><code>pick_print_required</code> <code>order_print_required</code> <code>print_label_in_sync</code> <code>print_while_bin_clear</code> <code>no_of_print_copies</code> <code>pptl_color_config</code> <code>excluded_pptl_color_actions</code> <code>master_pptl_enabled</code> <code>multiple_reprints_enabled</code> <code>enable_single_pptl_press_for_front_bin_clear</code> <code>skip_pptl_press</code> <code>print_scan_required</code> <code>print_actions</code> <code>transform_print_data</code></td></tr>
-          <tr><td>Show Upcoming Picks</td><td>Display upcoming pick list / previous picks at station UI</td><td><code>show_upcoming_pick_list</code> <code>show_previous_pick</code> <code>pick_front_display_count</code></td></tr>
-          <tr><td>One-Step Pick</td><td>Single-action confirm picking without multi-step scan flow</td><td><code>one_step_pick</code></td></tr>
-          <tr><td>Maintenance Mode</td><td>Pause and resume picking at a station during maintenance</td><td><em style="color:var(--text-2)">Managed by pick_maintenance_manager; no single config key</em></td></tr>
-        </tbody></table></div>
-      </div>
-
-      <!-- ─ Flow-Specific ──────────────────────────────────────── -->
-      <div class="card">
-        <div class="card-title">B · Flow-Specific — Standard GTP / Vanilla Bin <span style="font-size:10px;font-family:var(--mono);color:var(--accent-t);margin-left:8px">post_pick_agent: bin</span></div>
-        <div class="tbl-wrap"><table><thead><tr><th>Feature</th><th>Description</th><th>Config Keys</th></tr></thead><tbody>
-          <tr><td>Multi-order per bin</td><td>Multiple orders can share a single physical bin</td><td><code>max_orders_per_bin</code> <code>bin_packing_fraction</code></td></tr>
-          <tr><td>Bin Full Button</td><td>Operator signals bin complete via PPTL press</td><td><code>enable_single_pptl_press_for_front_bin_clear</code> <code>master_pptl_enabled</code></td></tr>
-          <tr><td>Destination wait gate</td><td>Rack release blocked until a bin destination is available</td><td><code>percent_of_free_bin_for_order_commit</code> <code>streaming_free_bins_or_docks_percent_for_order_commit</code></td></tr>
-          <tr><td>Two-stage bin flow</td><td>Supports two-stage bin packing with packing box intermediate step</td><td><code>two_stage_bin_enabled</code></td></tr>
-          <tr><td>Case-level picking</td><td>Allows picking full cases instead of individual units</td><td><code>case_pick_allowed</code></td></tr>
-          <tr><td>Partial pick</td><td>Allows committing a partial qty if full quantity unavailable</td><td><code>partial_pick_allowed</code></td></tr>
-        </tbody></table></div>
-      </div>
-
-      <div class="card">
-        <div class="card-title">B · Flow-Specific — EasyLoop / Single PPS <span style="font-size:10px;font-family:var(--mono);color:var(--accent-t);margin-left:8px">post_pick_agent: easyloop_bin</span></div>
-        <div class="tbl-wrap"><table><thead><tr><th>Feature</th><th>Description</th><th>Config Keys</th></tr></thead><tbody>
-          <tr><td>HSM vs FSM selection</td><td>PPS-level toggle to use hierarchical vs legacy flat state machine</td><td><code>use_hsm_for_pick_front</code> <em style="color:var(--text-2)">(PPS-level)</em></td></tr>
-          <tr><td>Pick type routing</td><td>Determines which flow variant a station runs</td><td><code>pick_type</code> <em style="color:var(--text-2)">(PPS-level)</em></td></tr>
-          <tr><td>Pick-and-pass</td><td>Enables passing order to next station in the loop</td><td><code>pick_and_pass_enabled</code> <em style="color:var(--text-2)">(PPS-level)</em></td></tr>
-          <tr><td>Flow-specific overrides</td><td>Per-flow config block applied on top of global settings</td><td><code>flow_specific_configs</code></td></tr>
-        </tbody></table></div>
-      </div>
-
-      <div class="card">
-        <div class="card-title">B · Flow-Specific — Shuttle / Looped Relay <span style="font-size:10px;font-family:var(--mono);color:var(--accent-t);margin-left:8px">post_pick_agent: shuttle</span></div>
-        <div class="tbl-wrap"><table><thead><tr><th>Feature</th><th>Description</th><th>Config Keys</th></tr></thead><tbody>
-          <tr><td>Relay threshold</td><td>Determines when relay vs direct routing is used for carrier dispatch</td><td><code>va_relay_threshold</code></td></tr>
-          <tr><td>Shuttle induct recheck</td><td>Threshold for rechecking shuttle induct point availability</td><td><code>shuttle_induct_point_recheck_threshold</code></td></tr>
-          <tr><td>Shuttle debug logging</td><td>Enables verbose logging for shuttle flow state transitions</td><td><code>enable_debug_logging_for_shuttle_flow</code></td></tr>
-          <tr><td>HTM TPQ integration</td><td>TPQ tolerance and deviation controls for HTM-managed stations</td><td><code>htm_tor_tolerance_for_ppf</code> <code>htm_deviation_penalty</code> <code>htm_deviation_threshold</code> <code>ideal_htm_tpq_float</code> <code>htm_bots_available</code></td></tr>
-          <tr><td>Double-belt retry</td><td>Max retries for double-belt system faults before escalating exception</td><td><code>double_belt_max_retry_count</code></td></tr>
-        </tbody></table></div>
-      </div>
-
-      <div class="card">
-        <div class="card-title">B · Flow-Specific — Zerowalk / RMS / TSORT <span style="font-size:10px;font-family:var(--mono);color:var(--accent-t);margin-left:8px">post_pick_agent: rms / tsort</span></div>
-        <div class="tbl-wrap"><table><thead><tr><th>Feature</th><th>Description</th><th>Config Keys</th></tr></thead><tbody>
-          <tr><td>Bin full in zerowalk</td><td>Config-gated operator signal for pre-drop complete</td><td><code>enable_bin_full_in_zerowalk</code></td></tr>
-          <tr><td>Zerowalk RMS sanity check</td><td>Validates zerowalk/RMS state on HSM initialisation</td><td><code>check_zerowalk_rms_sanity</code></td></tr>
-          <tr><td>RMS belt dimensions</td><td>Physical belt dimension config for RMS carrier validation</td><td><code>rms_belt_dimension</code></td></tr>
-          <tr><td>Skip barcode validation</td><td>Bypass barcode check for zerowalk flows where scanning is not required</td><td><code>zw_skip_barcodes_validation</code></td></tr>
-          <tr><td>MRU flow</td><td>Mobile Rack Unit flow routing and lock behaviour</td><td><code>mru_flow</code> <code>mru_lock_update_only_for_order_type</code></td></tr>
-          <tr><td>MTU / extraction flow</td><td>Mobile Transfer Unit flow with rack-type-specific extraction logic</td><td><code>mtu_flow</code> <code>extraction_mtu_racktype</code></td></tr>
-        </tbody></table></div>
-      </div>
-
-      <div class="card">
-        <div class="card-title">B · Flow-Specific — RPick / Retail <span style="font-size:10px;font-family:var(--mono);color:var(--accent-t);margin-left:8px">Separate HSM: rpick_hsm</span></div>
-        <div class="tbl-wrap"><table><thead><tr><th>Feature</th><th>Description</th><th>Config Keys</th></tr></thead><tbody>
-          <tr><td>Rack access / deaccess times</td><td>Time cost for ranger to access and deaccess a rack in the aisle</td><td><code>rpick_rack_access_time_in_sec</code> <code>rpick_rack_deaccess_time_in_sec</code></td></tr>
-          <tr><td>Order recalculation delay</td><td>Delay before recalculating order assignments after a change</td><td><code>rpick_recalculate_order_wait_delay_ms</code></td></tr>
-          <tr><td>Transfer recheck interval</td><td>How often pending item transfers are rechecked</td><td><code>rpick_recheck_pending_item_transfer_delay_sec</code></td></tr>
-          <tr><td>Default display list</td><td>Default order display list for retail pick UI</td><td><code>rpick_default_display_list</code></td></tr>
-          <tr><td>Reserve aisle management</td><td>Overcrowding penalty, same-aisle reward, and operator cache TTL for aisles</td><td><code>pick_reserve_aisle_operators_cache_ttl_in_ms</code> <code>pick_reserve_aisle_overcrowding_penalty</code> <code>pick_reserve_same_aisle_reward</code> <code>max_operators_preferred_in_aisle</code></td></tr>
-        </tbody></table></div>
-      </div>
-
-      <div class="card">
-        <div class="card-title">B · Flow-Specific — Autopick <span style="font-size:10px;font-family:var(--mono);color:var(--accent-t);margin-left:8px">auto_pick_front_server</span></div>
-        <div class="tbl-wrap"><table><thead><tr><th>Feature</th><th>Description</th><th>Config Keys</th></tr></thead><tbody>
-          <tr><td>Autopick source</td><td>Source and back-station config for autonomous picking</td><td><code>auto_pick_source</code> <code>auto_pick_back</code></td></tr>
-          <tr><td>Auto sideline on failure</td><td>Automatically sidelined orders when autopick cannot complete</td><td><code>auto_sideline_pick</code> <code>auto_skip_alert_duration</code></td></tr>
-          <tr><td>Republish on failure</td><td>Retries autopick by republishing the message on failure</td><td><code>republish_autopick_msg</code> <code>max_autopick_republish_count</code></td></tr>
-          <tr><td>Agent error popup</td><td>Surfaces agent/bot error to operator UI when autopick fails</td><td><code>enable_agent_error_popup</code> <code>is_error_popup_disabled</code></td></tr>
-        </tbody></table></div>
-      </div>
-
-      <!-- ─ Advanced ────────────────────────────────────────────── -->
-      <div class="card">
-        <div class="card-title">C · Advanced Features — UOM &amp; Checklist Picking</div>
-        <div class="tbl-wrap"><table><thead><tr><th>Feature</th><th>Description</th><th>Config Keys</th></tr></thead><tbody>
-          <tr><td>Strict UOM Enforcement</td><td>Enforces exact UOM matching; blocks partial unit commits</td><td><code>strict_uom_pick_enabled</code></td></tr>
-          <tr><td>UOM Count Suggestion</td><td>System suggests the correct UOM count to the operator</td><td><code>enable_uom_count_suggestion</code></td></tr>
-          <tr><td>IRT Scan</td><td>Intra-item verification scan within checklist items</td><td><code>irt_scan_enabled</code></td></tr>
-          <tr><td>UOM Container Break</td><td>Allows splitting containers when UOM requires it</td><td><code>uom_container_breakable</code></td></tr>
-          <tr><td>UOM Fulfillability Cap</td><td>Upper bounds on UOM quantity that can be fulfilled per order</td><td><code>max_uom_fulfillability</code> <code>max_uom_quantity_buffer</code></td></tr>
-          <tr><td>Merge Same Item UOM</td><td>Merges order lines for same item and UOM to reduce picks</td><td><code>merge_same_item_and_uom</code></td></tr>
-        </tbody></table></div>
-      </div>
-
-      <div class="card">
-        <div class="card-title">C · Advanced Features — MSIO (Multi-SKU Item Operations)</div>
-        <div class="tbl-wrap"><table><thead><tr><th>Feature</th><th>Description</th><th>Config Keys</th></tr></thead><tbody>
-          <tr><td>MSIO enabled</td><td>Enables multi-SKU item operations mode</td><td><code>msiob_enabled</code></td></tr>
-          <tr><td>MSIO running bin</td><td>Dedicated bin that tracks all MSIO orders in flight</td><td><code>msio_running_bin</code></td></tr>
-          <tr><td>Bin full default zero</td><td>Whether MSIO bin full defaults to zero committed quantity</td><td><code>msio_bin_full_default_zero</code></td></tr>
-          <tr><td>Max orders per MSIO bin</td><td>Caps number of MSIO orders in one physical bin</td><td><code>max_msiob_order_count</code> <code>max_msiob_orders_in_physical_bin</code></td></tr>
-          <tr><td>Min release threshold</td><td>Minimum MSIO order count before bin is released downstream</td><td><code>min_msiob_order_count</code></td></tr>
-          <tr><td>Merge different bin tags</td><td>Allows merging MSIO orders that have different bin tags</td><td><code>merge_msio_orders_with_diff_bin_tag</code></td></tr>
-          <tr><td>Mutually exclusive tags</td><td>Prevents orders with incompatible tags from sharing the same bin</td><td><code>mutually_exclusive_tags_for_msio</code></td></tr>
-          <tr><td>MSIO preference cost</td><td>Cost bonus/penalty for prioritising MSIO orders in scheduling</td><td><code>pps_task_priority_msio_preference_cost</code></td></tr>
-        </tbody></table></div>
-      </div>
-
-      <div class="card">
-        <div class="card-title">C · Advanced Features — TPQ (Task Pool Quality)</div>
-        <div class="tbl-wrap"><table><thead><tr><th>Feature</th><th>Description</th><th>Config Keys</th></tr></thead><tbody>
-          <tr><td>TPQ enabled</td><td>Enables Task Pool Quality scoring to balance rack assignments across PPS</td><td><code>tpq_enabled</code></td></tr>
-          <tr><td>Deviation range &amp; penalty</td><td>Allowed deviation from ideal TPQ and penalty applied when exceeded</td><td><code>tpq_allowed_range</code> <code>tpq_deviation_bracket_delta</code> <code>tpq_deviation_max_bracket</code> <code>tpq_deviation_penalty_in_processing</code> <code>tpq_weight</code></td></tr>
-          <tr><td>Rack count cache</td><td>Caches rack inventory counts for TPQ performance</td><td><code>tpq_rack_count_cache_ttl_ms</code> <code>rack_count_cache_timer</code></td></tr>
-          <tr><td>Recalculation interval</td><td>How often TPQ scores are recalculated</td><td><code>tpq_recalculation_interval_ms</code></td></tr>
-          <tr><td>Travel time factor</td><td>Return-leg travel time multiplier used in TPQ cost model</td><td><code>tpq_travel_time_return_factor</code></td></tr>
-          <tr><td>Rack threshold to trigger TPQ</td><td>Minimum rack count before TPQ algorithm activates</td><td><code>rack_count_threshold_to_run_tpq</code></td></tr>
-          <tr><td>Ideal TPQ targets</td><td>Target TPQ floats for standard, HTM, and VTM station types</td><td><code>ideal_tpq_float</code> <code>ideal_htm_tpq_float</code> <code>ideal_vtm_tpq_float</code> <code>largest_tpq_value</code></td></tr>
-        </tbody></table></div>
-      </div>
-
-      <div class="card">
-        <div class="card-title">C · Advanced Features — Order Streaming (Advanced)</div>
-        <div class="tbl-wrap"><table><thead><tr><th>Feature</th><th>Description</th><th>Config Keys</th></tr></thead><tbody>
-          <tr><td>Streaming validation</td><td>Validates orders entering the streaming pipeline</td><td><code>enable_streaming_validations</code></td></tr>
-          <tr><td>Tier-wise &amp; batch sorting</td><td>Sort streaming orders by rack tier or in batch groups</td><td><code>tier_wise_sorting_in_streaming</code> <code>streaming_batch_wise_sorting</code></td></tr>
-          <tr><td>Grouptype priority</td><td>Priority ordering for order group types within streaming</td><td><code>streaming_grouptype_priority</code></td></tr>
-          <tr><td>Dynamic localization</td><td>Learns optimal slot placement for streaming orders over time</td><td><code>dynamic_localization_for_streaming</code></td></tr>
-          <tr><td>Exclude streaming prioritization</td><td>Skips certain orders from streaming prioritisation logic</td><td><code>exclude_streaming_prioritization</code></td></tr>
-          <tr><td>TPID resolve at start</td><td>Controls whether TPIDs are resolved when streaming starts</td><td><code>skip_resolve_streaming_tpids_at_start</code> <code>skip_resolve_tpids_at_start</code> <code>tpid_resolver_cores</code></td></tr>
-        </tbody></table></div>
-      </div>
-
-      <div class="card">
-        <div class="card-title">C · Advanced Features — VTM (Virtual Tote Management)</div>
-        <div class="tbl-wrap"><table><thead><tr><th>Feature</th><th>Description</th><th>Config Keys</th></tr></thead><tbody>
-          <tr><td>Aisle switching time</td><td>Time cost (ms) for a ranger to switch between aisles</td><td><code>vtm_aisle_switching_ms</code></td></tr>
-          <tr><td>Cluster update interval</td><td>How often VTM re-clusters orders into totes</td><td><code>vtm_cluster_update_interval_ms</code> <code>vtm_assigner_interval_ms</code></td></tr>
-          <tr><td>Deviation penalty</td><td>Penalty applied when tote assignment deviates from optimal</td><td><code>vtm_deviation_penalty</code> <code>vtm_deviation_penalty_in_processing</code> <code>vtm_deviation_threshold</code></td></tr>
-          <tr><td>Travel time defaults</td><td>Default travel times when actual ETA unavailable</td><td><code>vtm_not_in_aisle_travel_time</code> <code>vtm_single_tote_pickup_default_ms</code> <code>vtm_single_tote_dropoff_default_ms</code></td></tr>
-          <tr><td>Tote capacity</td><td>Maximum picks per virtual tote</td><td><code>vtm_tote_capacity</code></td></tr>
-          <tr><td>VTM bots &amp; TOR tolerance</td><td>Available bots for VTM and tolerance for pick-face TOR</td><td><code>num_vtm_bots</code> <code>vtm_tor_tolerance_for_ppf</code></td></tr>
-          <tr><td>VTM start IDC time</td><td>Initial IDC time reference used when VTM starts</td><td><code>vtm_start_idc_time</code></td></tr>
-          <tr><td>Default coverage &amp; UPH</td><td>Default aisle coverage and picks-per-hour for VTM planning</td><td><code>default_vtm_aisle_coverage</code> <code>default_vtm_picks_per_hour</code></td></tr>
-        </tbody></table></div>
-      </div>
-
-      <div class="card">
-        <div class="card-title">C · Advanced Features — Cubing &amp; Volumetric</div>
-        <div class="tbl-wrap"><table><thead><tr><th>Feature</th><th>Description</th><th>Config Keys</th></tr></thead><tbody>
-          <tr><td>Container full threshold</td><td>Fraction of container volume at which it is marked full</td><td><code>container_full_fraction</code></td></tr>
-          <tr><td>Bin packing optimisation</td><td>Fraction used to optimise how tightly items are packed into bins</td><td><code>bin_packing_fraction</code></td></tr>
-          <tr><td>Break inners / outers</td><td>Allows splitting cases (inners) or pallets (outers) for mixed picks</td><td><code>break_inners</code> <code>break_outers</code></td></tr>
-          <tr><td>Skip dimension check</td><td>Bypasses volumetric dimension validation for specific flows</td><td><code>skip_dimension_check</code></td></tr>
-          <tr><td>Force fit to bin</td><td>Forces order into bin even if volumetric check would reject it</td><td><code>force_fit_order_to_bin</code></td></tr>
-          <tr><td>Container put confirmation</td><td>Requires operator confirmation when placing items into container</td><td><code>container_put_confirmation</code></td></tr>
-        </tbody></table></div>
-      </div>
-
-      <div class="card">
-        <div class="card-title">C · Advanced Features — Advanced Inventory Strategies</div>
-        <div class="tbl-wrap"><table><thead><tr><th>Feature</th><th>Description</th><th>Config Keys</th></tr></thead><tbody>
-          <tr><td>Store zone mapping</td><td>Maps orders to physical store zones for zone-aware allocation</td><td><code>store_zone_mapping_active</code></td></tr>
-          <tr><td>Aisle awareness</td><td>Uses aisle proximity maps to reduce cross-aisle robot travel</td><td><code>aisle_awareness_enabled</code> <code>aisle_adjacency_map</code></td></tr>
-          <tr><td>Piggybacking</td><td>Combines orders onto an existing PPF task to reduce redundant rack trips</td><td><code>pbt_to_consider_piggyback_ppf_in_hrs</code></td></tr>
-          <tr><td>Movable racks</td><td>Allows racks to be repositioned to different sectors for cost optimisation</td><td><code>movable_racks_to_different_sector</code></td></tr>
-          <tr><td>IDC unassigned entity cost</td><td>Cost penalty for unassigned entities and tote IDC limit</td><td><code>idc_cost_unassigned_entity</code> <code>unassigned_tote_idc_limit</code></td></tr>
-        </tbody></table></div>
-      </div>
-
-      <!-- ─ Exception & Recovery ───────────────────────────────── -->
-      <div class="card">
-        <div class="card-title">D · Exception &amp; Recovery Features</div>
-        <div class="tbl-wrap"><table><thead><tr><th>Feature</th><th>Description</th><th>Config Keys</th></tr></thead><tbody>
-          <tr><td>Carrier change exception</td><td>Handles carrier swap mid-pick; triggers exception flow</td><td><code>carrier_change_exception_enabled</code></td></tr>
-          <tr><td>Short pick audit</td><td>Audits picks where quantity committed is less than ordered</td><td><code>audit_on_short_pick</code></td></tr>
-          <tr><td>Partial pick</td><td>Allows committing a partial quantity if full quantity unavailable</td><td><code>partial_pick_allowed</code></td></tr>
-          <tr><td>Sideline pending orders</td><td>Automatically sidelined orders with unresolved inventory exceptions</td><td><code>sideline_pending_inventory_orders</code></td></tr>
-          <tr><td>No-order retry interval</td><td>How long bin planner waits before retrying when no orders are available</td><td><code>bin_planner_no_order_retry_interval_ms</code></td></tr>
-          <tr><td>Carrier skip timer</td><td>Timeout before skipping a carrier that has not arrived</td><td><code>inventory_carrier_skip_timer_ms</code> <code>order_carrier_skip_timer_ms</code></td></tr>
-          <tr><td>Auto-undock on exception</td><td>Automatically undocks MRU/MTU when an exception is raised</td><td><code>auto_undock_mru</code> <code>auto_undock_mtu</code></td></tr>
-          <tr><td>Remove blocked racks</td><td>Periodic cron that removes racks flagged as permanently blocked</td><td><code>remove_blocked_racks_cron_ms</code></td></tr>
-          <tr><td>RC order matching</td><td>Defines how return-to-carrier orders are matched and handled</td><td><code>order_rc_mapping_behaviour</code> <code>rc_order_matchers_keys</code></td></tr>
-          <tr><td>MSLO enabled</td><td>Multi-Slot Location Operations — handles multi-slot exception resolution</td><td><code>mslo_enabled</code></td></tr>
-        </tbody></table></div>
-      </div>
-
-      <div class="card" style="border-color:var(--accent-d);background:var(--s2)">
-        <div style="font-family:var(--mono);font-size:11px;color:var(--amber-t);margin-bottom:6px">KEY OBSERVATION</div>
-        <p style="color:var(--text-2);font-size:13px;line-height:1.7">~280 of the 385 config keys map directly to specific features. The remaining ~100 are infrastructure/logging/URL configs (<code>influx_url</code>, <code>gmc_base_url</code>, <code>log_*</code>, etc.) that don't correspond to a single feature but support observability and integration.</p>
       </div>
     </section>
 

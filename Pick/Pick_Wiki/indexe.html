@@ -83,7 +83,7 @@ html, body {
 .tabbar {
   flex-shrink: 0;
   display: flex;
-  background: var(--bg);
+  background: var(--s1);
   border-bottom: 1px solid var(--border);
   padding: 0 24px;
   overflow-x: auto;
@@ -97,21 +97,17 @@ html, body {
   font-weight: 500;
   letter-spacing: 0.04em;
   color: var(--text-3);
-  padding: 10px 16px;
-  margin: 6px 3px 0;
+  padding: 12px 16px;
   cursor: pointer;
-  border-radius: 4px 4px 0 0;
   border-bottom: 2px solid transparent;
-  background: #4A3525;
   white-space: nowrap;
-  transition: color 0.12s, background 0.12s;
+  transition: color 0.12s;
   user-select: none;
 }
-.tab:hover { color: var(--text-2); background: #5C4030; }
+.tab:hover { color: var(--text-2); }
 .tab.active {
   color: var(--accent-t);
   border-bottom-color: var(--accent);
-  background: #6B4C35;
 }
 
 /* ── CONTENT ────────────────────────────────────────────────── */
@@ -558,13 +554,12 @@ details[open] summary { color: var(--accent-t); }
   <nav class="tabbar" role="tablist">
     <button class="tab active" onclick="show('overview',this)">OVERVIEW</button>
     <button class="tab" onclick="show('types',this)">PICK TYPES</button>
-    <button class="tab" onclick="show('pickflows',this)">PICK FLOWS</button>
+    <button class="tab" onclick="show('flows',this)">FLOWS &amp; FSMs</button>
     <button class="tab" onclick="show('features',this)">FEATURES</button>
-    <button class="tab" onclick="show('config',this)">CONFIG &amp; CACHES</button>
     <button class="tab" onclick="show('stations',this)">STATIONS</button>
     <button class="tab" onclick="show('models',this)">DATA MODELS</button>
-    <button class="tab" onclick="show('flows',this)">FSMs</button>
     <button class="tab" onclick="show('kafka',this)">KAFKA EVENTS</button>
+    <button class="tab" onclick="show('config',this)">CONFIG &amp; CACHES</button>
     <button class="tab" onclick="show('testing',this)">TESTING</button>
   </nav>
 
@@ -846,167 +841,6 @@ details[open] summary { color: var(--accent-t); }
       <div class="card">
         <div class="card-title">Multi-Picklist Orchestration</div>
         <p>When multiple picklists are simultaneously active for a PPS, <code>multi_picklist_orchestrator</code> (29 KB) coordinates them — enabling one station to process batched orders across multiple racks in parallel. Bin planning is handled cooperatively with the <code>picklist_processing_*_node</code> variants.</p>
-      </div>
-    </section>
-
-    <!-- ══ PICK FLOWS ═══════════════════════════════════════════ -->
-    <section id="pane-pickflows" class="pane">
-      <div class="sec-head">Pick Flows — Functional Overview</div>
-
-      <div class="card">
-        <div class="card-title">How flows are determined</div>
-        <p style="color:var(--text-2);font-size:13px;line-height:1.7;margin-bottom:10px">Pick flows are determined by <strong style="color:var(--text)">PPS station configuration</strong> (<code style="font-family:var(--mono);font-size:11px;background:var(--s2);padding:1px 5px;border-radius:3px">post_pick_agent</code>), not by order type. Each flow encodes its own bin allocation strategy, rack gating logic, and post-pick destination routing. The same order can run through different flows depending on which station picks it.</p>
-        <div class="tbl-wrap"><table>
-          <thead><tr><th>Flow</th><th>post_pick_agent</th><th>State Machine</th><th>Topology</th></tr></thead>
-          <tbody>
-            <tr><td>Standard GTP</td><td><code style="font-family:var(--mono);font-size:11px;background:var(--s2);padding:1px 5px;border-radius:3px">bin</code></td><td>pick_front_hsm / pick_front_fsm</td><td>Bot → PPS → Bin → Belt</td></tr>
-            <tr><td>EasyLoop</td><td><code style="font-family:var(--mono);font-size:11px;background:var(--s2);padding:1px 5px;border-radius:3px">easyloop_bin</code></td><td>pick_front_single_pps_hsm</td><td>Carousel → Single PPS → Loop</td></tr>
-            <tr><td>Shuttle / Relay</td><td><code style="font-family:var(--mono);font-size:11px;background:var(--s2);padding:1px 5px;border-radius:3px">shuttle</code></td><td>pick_front_hsm (looped variant)</td><td>Bot → PPS → Shuttle Tray → Consolidation</td></tr>
-            <tr><td>Zerowalk / TSORT</td><td><code style="font-family:var(--mono);font-size:11px;background:var(--s2);padding:1px 5px;border-radius:3px">tsort</code></td><td>pick_front_hsm</td><td>Bot → PPS → Sortation Chute</td></tr>
-            <tr><td>RMS</td><td><code style="font-family:var(--mono);font-size:11px;background:var(--s2);padding:1px 5px;border-radius:3px">rms</code></td><td>pick_front_hsm</td><td>Deep Storage → PPS → Forward Area</td></tr>
-            <tr><td>RPick / Retail</td><td>N/A (separate HSM)</td><td>rpick_hsm</td><td>Ranger → Aisle → Rollcage → Transfer</td></tr>
-          </tbody>
-        </table></div>
-      </div>
-
-      <!-- Flow 1 -->
-      <div class="card">
-        <div class="card-title" style="color:var(--accent-t)">① Standard GTP — Vanilla Bin</div>
-        <p style="color:var(--text-2);font-size:13px;line-height:1.7;margin-bottom:12px">The most common flow. Autonomous bots transport racks to a PPS station. An operator scans slots, picks items into pre-allocated bins, and signals completion. Bins exit on a consolidation belt for downstream dispatch.</p>
-        <div class="tbl-wrap"><table>
-          <thead><tr><th>Aspect</th><th>Detail</th></tr></thead>
-          <tbody>
-            <tr><td>Bin allocation</td><td>Pre-allocated by bin_planner; multiple orders can share one bin</td></tr>
-            <tr><td>Rack gating</td><td>Rack release blocked until a bin destination is available (<code style="font-family:var(--mono);font-size:11px;background:var(--s2);padding:1px 5px;border-radius:3px">is_pick_possible/2</code>)</td></tr>
-            <tr><td>Throughput model</td><td>High-velocity short picks; optimised for UPH via rack tier selection</td></tr>
-            <tr><td>Destination</td><td>Consolidation belt → ship lane</td></tr>
-            <tr><td>Bin signal</td><td>Operator presses PPTL (Pick-to-Tote Light) when bin is full</td></tr>
-            <tr><td>Optional features</td><td>Two-stage bin, case-level picking, partial pick, packing box, MSIO</td></tr>
-            <tr><td>Use case</td><td>Standard e-commerce fulfilment — high variety, low quantity per SKU</td></tr>
-          </tbody>
-        </table></div>
-      </div>
-
-      <!-- Flow 2 -->
-      <div class="card">
-        <div class="card-title" style="color:var(--accent-t)">② EasyLoop — Single PPS Carousel</div>
-        <p style="color:var(--text-2);font-size:13px;line-height:1.7;margin-bottom:12px">A carousel/relay model where a single PPS station cycles racks continuously. The system (HTM) owns destination allocation rather than the operator. Designed for very high-velocity environments where manual bin assignment would become a bottleneck.</p>
-        <div class="tbl-wrap"><table>
-          <thead><tr><th>Aspect</th><th>Detail</th></tr></thead>
-          <tbody>
-            <tr><td>Bin allocation</td><td>System-managed (HTM-orchestrated); one order per slot</td></tr>
-            <tr><td>Station topology</td><td>Single PPS — racks cycle in a closed loop back to the same station</td></tr>
-            <tr><td>Throughput model</td><td>Sustained high UPH; no pause between rack arrivals</td></tr>
-            <tr><td>Destination</td><td>Fixed relay lane managed by HTM</td></tr>
-            <tr><td>Optional features</td><td>Pick-and-pass (pass order to next station in loop)</td></tr>
-            <tr><td>Use case</td><td>High-volume retail or grocery fulfilment (e.g. Walmart-style)</td></tr>
-          </tbody>
-        </table></div>
-      </div>
-
-      <!-- Flow 3 -->
-      <div class="card">
-        <div class="card-title" style="color:var(--accent-t)">③ Shuttle / Looped Relay</div>
-        <p style="color:var(--text-2);font-size:13px;line-height:1.7;margin-bottom:12px">Items are picked onto shuttle trays that move via conveyor to consolidation points. A single shuttle carrier can hold multiple orders. The flow includes shuttle-specific carrier validation, pre-drop level checks, and belt exception handling.</p>
-        <div class="tbl-wrap"><table>
-          <thead><tr><th>Aspect</th><th>Detail</th></tr></thead>
-          <tbody>
-            <tr><td>Bin allocation</td><td>Tray managed by shuttle system; system-allocated destinations</td></tr>
-            <tr><td>Station topology</td><td>Multiple PPS stations share a looped shuttle conveyor</td></tr>
-            <tr><td>Throughput model</td><td>Speed-optimised; conveyor removes human wait time between picks</td></tr>
-            <tr><td>Destination</td><td>Shuttle consolidation point → dispatch</td></tr>
-            <tr><td>Exception handling</td><td>Dedicated shuttle carrier exception node (belt faults, level-order mapping)</td></tr>
-            <tr><td>Use case</td><td>Apparel, footwear — tray-based high-speed systems</td></tr>
-          </tbody>
-        </table></div>
-      </div>
-
-      <!-- Flow 4 -->
-      <div class="card">
-        <div class="card-title" style="color:var(--accent-t)">④ Zerowalk / TSORT — Sortation-Driven</div>
-        <p style="color:var(--text-2);font-size:13px;line-height:1.7;margin-bottom:12px">Items are picked directly into sortation chutes or trays without a relay mechanic. The "pre-drop" model means the operator signals placement on the rack slot itself (zerowalk) or into a sort chute (TSORT). Post-pick destination routes straight to a sortation system.</p>
-        <div class="tbl-wrap"><table>
-          <thead><tr><th>Aspect</th><th>Detail</th></tr></thead>
-          <tbody>
-            <tr><td>Bin allocation</td><td>Sort chute or pre-drop slot; no traditional bin</td></tr>
-            <tr><td>Station topology</td><td>Bots bring racks; items placed in sort chute at PPS</td></tr>
-            <tr><td>Throughput model</td><td>Sortation-enabled; downstream sorter handles order consolidation</td></tr>
-            <tr><td>Destination</td><td>Sortation lanes → packing</td></tr>
-            <tr><td>Optional features</td><td>Zerowalk bin-full signal, barcode validation bypass, RMS belt dimensions</td></tr>
-            <tr><td>Use case</td><td>Sort-to-tote fulfilment; facilities with sorter infrastructure</td></tr>
-          </tbody>
-        </table></div>
-      </div>
-
-      <!-- Flow 5 -->
-      <div class="card">
-        <div class="card-title" style="color:var(--accent-t)">⑤ RMS — Reserve Management System</div>
-        <p style="color:var(--text-2);font-size:13px;line-height:1.7;margin-bottom:12px">Orders pull inventory from deep-storage or reserve racks into the forward picking area. Primarily used for stock rotation and replenishing forward-area slots when they run low. Has its own destination node and picklist filter.</p>
-        <div class="tbl-wrap"><table>
-          <thead><tr><th>Aspect</th><th>Detail</th></tr></thead>
-          <tbody>
-            <tr><td>Bin allocation</td><td>Reserve bin; allocated for inbound replenishment</td></tr>
-            <tr><td>Station topology</td><td>Deep storage → PPS → induction queue for forward area</td></tr>
-            <tr><td>Throughput model</td><td>Replenishment-focused; not optimised for unit throughput</td></tr>
-            <tr><td>Destination</td><td>Forward-area induction → slot replenishment</td></tr>
-            <tr><td>Use case</td><td>DOH management; preventing stockouts in forward picking area</td></tr>
-          </tbody>
-        </table></div>
-      </div>
-
-      <!-- Flow 6 -->
-      <div class="card">
-        <div class="card-title" style="color:var(--accent-t)">⑥ RPick — Retail / Reserve Pick</div>
-        <p style="color:var(--text-2);font-size:13px;line-height:1.7;margin-bottom:12px">A completely separate HSM (<code style="font-family:var(--mono);font-size:11px;background:var(--s2);padding:1px 5px;border-radius:3px">rpick_hsm</code>) for reserve-area picking where rangers physically walk aisles rather than bots bringing racks. Rollcage-based, with item/container scanning, transfer request handling, and dedicated analytics.</p>
-        <div class="tbl-wrap"><table>
-          <thead><tr><th>Aspect</th><th>Detail</th></tr></thead>
-          <tbody>
-            <tr><td>Bin allocation</td><td>Rollcage bins; ranger walks aisle and fills rollcage</td></tr>
-            <tr><td>Station topology</td><td>No bots — ranger navigates reserve aisles autonomously</td></tr>
-            <tr><td>Throughput model</td><td>Verification-focused; accuracy over speed</td></tr>
-            <tr><td>Destination</td><td>Rollcage → transfer to forward area or audit queue</td></tr>
-            <tr><td>Scanning</td><td>Item barcode + container barcode + post-pick clean scan</td></tr>
-            <tr><td>Transfer requests</td><td>Checks pending inter-aisle transfer requests before each pick</td></tr>
-            <tr><td>Analytics</td><td>Dedicated rpick_analytics_manager tracks ranger UPH and variance</td></tr>
-            <tr><td>Use case</td><td>Stock rotation, variance reconciliation, reserve area replenishment</td></tr>
-          </tbody>
-        </table></div>
-      </div>
-
-      <!-- FSM vs HSM -->
-      <div class="card">
-        <div class="card-title">FSM vs HSM — Architecture</div>
-        <p style="color:var(--text-2);font-size:13px;line-height:1.7;margin-bottom:12px">Both coexist — it is not a full migration. FSMs remain active for PPS configurations that have not been moved to the HSM path.</p>
-        <div class="tbl-wrap"><table>
-          <thead><tr><th></th><th>FSM (Legacy)</th><th>HSM (Current)</th></tr></thead>
-          <tbody>
-            <tr><td>Modules</td><td>pick_front_fsm, pick_back_fsm, rc_pick_back_fsm</td><td>pick_front_hsm, pick_front_single_pps_hsm, rpick_hsm</td></tr>
-            <tr><td>Structure</td><td>Flat — all ~30 states in one module</td><td>Hierarchical — each state is its own node module</td></tr>
-            <tr><td>Transitions</td><td>gen_statem callbacks with explicit state functions</td><td>Node graph via <code style="font-family:var(--mono);font-size:11px;background:var(--s2);padding:1px 5px;border-radius:3px">{subproc, NextNode, …}</code></td></tr>
-            <tr><td>Exception handling</td><td>Inline in state functions</td><td>Dedicated exception node subtrees per flow type</td></tr>
-            <tr><td>Status</td><td>Active for legacy PPS configs</td><td>Preferred for all new flows and station types</td></tr>
-            <tr><td>Toggle</td><td colspan="2">Per-PPS via <code style="font-family:var(--mono);font-size:11px;background:var(--s2);padding:1px 5px;border-radius:3px">use_hsm_for_pick_front</code> config key</td></tr>
-          </tbody>
-        </table></div>
-      </div>
-
-      <!-- Cross-cutting features -->
-      <div class="card">
-        <div class="card-title">Cross-Flow Features</div>
-        <p style="color:var(--text-2);font-size:13px;line-height:1.7;margin-bottom:12px">These features can be enabled independently of flow type and compose with any of the six flows above.</p>
-        <div class="tbl-wrap"><table>
-          <thead><tr><th>Feature</th><th>What it does</th><th>Key config</th></tr></thead>
-          <tbody>
-            <tr><td>TPQ (Task Pool Quality)</td><td>Balances rack assignments across PPS stations by scoring queue depth</td><td><code style="font-family:var(--mono);font-size:11px;background:var(--s2);padding:1px 5px;border-radius:3px">tpq_enabled</code></td></tr>
-            <tr><td>PPF Rack Tiers</td><td>Prioritises racks already near the assigned PPS to minimise bot travel</td><td><code style="font-family:var(--mono);font-size:11px;background:var(--s2);padding:1px 5px;border-radius:3px">rack_selection_strategy</code></td></tr>
-            <tr><td>Order Streaming</td><td>Continuously pushes orders into forward queue for steady-state throughput</td><td><code style="font-family:var(--mono);font-size:11px;background:var(--s2);padding:1px 5px;border-radius:3px">streaming_orders</code></td></tr>
-            <tr><td>MSIO</td><td>Multi-SKU item operations — dedicated running bin for complex multi-SKU orders</td><td><code style="font-family:var(--mono);font-size:11px;background:var(--s2);padding:1px 5px;border-radius:3px">msiob_enabled</code></td></tr>
-            <tr><td>UOM / Checklist</td><td>Multi-level item scan verification — flat (count) or nested (LPN/lot)</td><td><code style="font-family:var(--mono);font-size:11px;background:var(--s2);padding:1px 5px;border-radius:3px">strict_uom_pick_enabled</code></td></tr>
-            <tr><td>Tote / Packing Box</td><td>Tracks physical carriers inside bins; supports virtual bins and auto-reuse</td><td><code style="font-family:var(--mono);font-size:11px;background:var(--s2);padding:1px 5px;border-radius:3px">totes_required</code></td></tr>
-            <tr><td>PPTL / Printing</td><td>Pick-to-tote label printing at completion; scan-to-confirm option</td><td><code style="font-family:var(--mono);font-size:11px;background:var(--s2);padding:1px 5px;border-radius:3px">pick_print_required</code></td></tr>
-            <tr><td>VTM</td><td>Virtual Tote Management — clusters orders into optimal virtual totes for rangers</td><td><code style="font-family:var(--mono);font-size:11px;background:var(--s2);padding:1px 5px;border-radius:3px">vtm_tote_capacity</code></td></tr>
-          </tbody>
-        </table></div>
       </div>
     </section>
 
