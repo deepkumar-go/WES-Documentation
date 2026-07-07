@@ -1,2 +1,1 @@
-# WES-Documentation
-Describes the WES Documentation
+This is a readme file
