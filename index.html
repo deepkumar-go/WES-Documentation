@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>WES Documentation</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #f4f5f7;
+      color: #172b4d;
+      min-height: 100vh;
+    }
+
+    header {
+      background: #0052cc;
+      color: #fff;
+      padding: 20px 32px;
+    }
+    header h1 { font-size: 1.4rem; font-weight: 700; }
+    header p  { font-size: 0.85rem; opacity: 0.8; margin-top: 4px; }
+
+    .container {
+      max-width: 860px;
+      margin: 32px auto;
+      padding: 0 20px 48px;
+    }
+
+    .tree { list-style: none; }
+    .tree, .tree ul { list-style: none; }
+    .tree > li { margin-bottom: 18px; }
+
+    .app-card {
+      background: #fff;
+      border: 1px solid #dfe1e6;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .app-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 18px;
+      background: #ebecf0;
+      border-bottom: 1px solid #dfe1e6;
+    }
+    .app-header .icon {
+      width: 22px; height: 22px;
+      flex-shrink: 0;
+      color: #5243aa;
+    }
+    .app-header .name {
+      font-weight: 700;
+      font-size: 1rem;
+      color: #172b4d;
+    }
+    .app-header .count {
+      margin-left: auto;
+      font-size: 0.75rem;
+      color: #6b778c;
+      background: #fff;
+      border: 1px solid #dfe1e6;
+      border-radius: 10px;
+      padding: 2px 9px;
+    }
+
+    .pages { padding: 6px 0; }
+    .pages li { list-style: none; }
+
+    .page-link {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 12px 18px 12px 44px;
+      text-decoration: none;
+      color: inherit;
+      border-bottom: 1px solid #f4f5f7;
+      position: relative;
+    }
+    .pages li:last-child .page-link { border-bottom: none; }
+    .page-link:hover { background: #f4f5f7; }
+    .page-link:hover .page-title { color: #0052cc; }
+
+    .page-link::before {
+      content: "";
+      position: absolute;
+      left: 22px;
+      top: 0;
+      bottom: 50%;
+      width: 14px;
+      border-left: 2px solid #dfe1e6;
+      border-bottom: 2px solid #dfe1e6;
+      border-radius: 0 0 0 6px;
+    }
+    .page-link::after {
+      content: "";
+      position: absolute;
+      left: 22px;
+      top: 50%;
+      bottom: -50%;
+      border-left: 2px solid #dfe1e6;
+    }
+    .pages li:last-child .page-link::after { display: none; }
+
+    .page-icon {
+      width: 16px; height: 16px;
+      margin-top: 2px;
+      flex-shrink: 0;
+      color: #6b778c;
+    }
+
+    .page-title {
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
+    .page-desc {
+      font-size: 0.78rem;
+      color: #6b778c;
+      margin-top: 2px;
+      line-height: 1.4;
+    }
+
+    .empty {
+      padding: 14px 18px;
+      font-size: 0.82rem;
+      color: #97a0af;
+      font-style: italic;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>WES Documentation</h1>
+    <p>Index of documentation pages by application module</p>
+  </header>
+
+  <div class="container">
+    <ul class="tree">
+
+      <li>
+        <div class="app-card">
+          <div class="app-header">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"/></svg>
+            <span class="name">Pick</span>
+            <span class="count">3 pages</span>
+          </div>
+          <ul class="pages">
+            <li>
+              <a class="page-link" href="Pick/Order_Orchestration/index.html">
+                <svg class="page-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>
+                <div>
+                  <div class="page-title">Order Orchestration</div>
+                  <div class="page-desc">Order fulfillment lifecycle flow — scheduling, PPS picking, bin planning, volumetric fitting, tote packing, and WMS export.</div>
+                </div>
+              </a>
+            </li>
+            <li>
+              <a class="page-link" href="Pick/Pick_Configs/index.html">
+                <svg class="page-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>
+                <div>
+                  <div class="page-title">Pick Configs</div>
+                  <div class="page-desc">Config reference for the Pick module.</div>
+                </div>
+              </a>
+            </li>
+            <li>
+              <a class="page-link" href="Pick/Pick_Wiki/index.html">
+                <svg class="page-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>
+                <div>
+                  <div class="page-title">Pick Wiki</div>
+                  <div class="page-desc">Developer wiki covering order_manager, order processing cycle, and related internals.</div>
+                </div>
+              </a>
+            </li>
+          </ul>
+        </div>
+      </li>
+
+      <li>
+        <div class="app-card">
+          <div class="app-header">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"/></svg>
+            <span class="name">Put</span>
+            <span class="count">0 pages</span>
+          </div>
+          <div class="empty">No pages yet</div>
+        </div>
+      </li>
+
+    </ul>
+  </div>
+</body>
+</html>

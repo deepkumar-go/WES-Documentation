@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Order Orchestration — butler_server</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #f4f5f7;
+      color: #172b4d;
+      min-height: 100vh;
+    }
+
+    header {
+      background: #0052cc;
+      color: #fff;
+      padding: 20px 32px;
+    }
+    header h1 { font-size: 1.4rem; font-weight: 700; }
+    header p  { font-size: 0.85rem; opacity: 0.8; margin-top: 4px; }
+
+    .container {
+      max-width: 960px;
+      margin: 32px auto;
+      padding: 0 20px 48px;
+    }
+
+    .flow {
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .step-wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .step {
+      width: 100%;
+      border-radius: 8px;
+      border: 2px solid transparent;
+      background: #fff;
+      cursor: pointer;
+      transition: box-shadow .15s, border-color .15s;
+      overflow: hidden;
+    }
+    .step:hover        { box-shadow: 0 2px 12px rgba(0,82,204,.15); border-color: #4c9aff; }
+    .step.active       { border-color: #0052cc; box-shadow: 0 2px 16px rgba(0,82,204,.2); }
+
+    .step-header {
+      display: flex;
+      align-items: center;
+      padding: 16px 20px;
+      gap: 16px;
+    }
+
+    .step-num {
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 700; font-size: 0.9rem;
+      flex-shrink: 0;
+      color: #fff;
+    }
+
+    .step-title-block { flex: 1; }
+    .step-title { font-weight: 600; font-size: 1rem; }
+    .step-subtitle { font-size: 0.78rem; color: #6b778c; margin-top: 2px; }
+
+    .step-chevron {
+      width: 20px; height: 20px;
+      flex-shrink: 0;
+      transition: transform .2s;
+      opacity: 0.5;
+    }
+    .step.active .step-chevron { transform: rotate(180deg); opacity: 1; }
+
+    .step-summary {
+      padding: 0 20px 14px 72px;
+      font-size: 0.85rem;
+      line-height: 1.6;
+      color: #42526e;
+      border-bottom: 1px solid #ebecf0;
+    }
+    @media (max-width: 600px) {
+      .step-summary { padding-left: 20px; }
+    }
+
+    .step-detail {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height .35s ease;
+      border-top: 1px solid transparent;
+    }
+    .step.active .step-detail {
+      max-height: 3000px;
+      border-top-color: #ebecf0;
+    }
+    .step-detail-inner {
+      padding: 20px 20px 20px 72px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+    }
+    @media (max-width: 600px) {
+      .step-detail-inner { grid-template-columns: 1fr; padding-left: 20px; }
+    }
+
+    .detail-card {
+      background: #f4f5f7;
+      border-radius: 6px;
+      padding: 14px 16px;
+    }
+    .detail-card h4 {
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      color: #5e6c84;
+      margin-bottom: 8px;
+    }
+    .detail-card ul {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .detail-card ul li {
+      font-size: 0.84rem;
+      line-height: 1.45;
+      padding-left: 14px;
+      position: relative;
+    }
+    .detail-card ul li::before {
+      content: "•";
+      position: absolute; left: 0;
+      color: #5e6c84;
+    }
+    .detail-card code {
+      font-family: "SFMono-Regular", Consolas, monospace;
+      font-size: 0.77rem;
+      background: #dfe1e6;
+      padding: 1px 5px;
+      border-radius: 3px;
+      color: #172b4d;
+    }
+
+    .status-flow {
+      grid-column: 1 / -1;
+      background: #f4f5f7;
+      border-radius: 6px;
+      padding: 14px 16px;
+    }
+    .status-flow h4 {
+      font-size: 0.75rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .06em; color: #5e6c84; margin-bottom: 12px;
+    }
+    .status-pills {
+      display: flex; flex-wrap: wrap; align-items: center; gap: 8px;
+    }
+    .pill {
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 0.78rem;
+      font-weight: 600;
+    }
+    .arrow-sep { color: #8993a4; font-size: 1rem; }
+
+    .connector {
+      width: 2px;
+      height: 24px;
+      background: #c1c7d0;
+      position: relative;
+      flex-shrink: 0;
+    }
+    .connector::after {
+      content: "";
+      position: absolute;
+      bottom: -1px; left: 50%;
+      transform: translateX(-50%);
+      border-left: 5px solid transparent;
+      border-right: 5px solid transparent;
+      border-top: 6px solid #c1c7d0;
+    }
+
+    /* per-step badge colours */
+    .c1 { background: #0052cc; }
+    .c2 { background: #0065ff; }
+    .c3 { background: #00875a; }
+    .c4 { background: #006644; }
+    .c5 { background: #ff5630; }
+    .c6 { background: #de350b; }
+    .c7 { background: #6554c0; }
+    .c8 { background: #403294; }
+
+    /* status pill colours */
+    .p-blue   { background: #deebff; color: #0747a6; }
+    .p-green  { background: #e3fcef; color: #006644; }
+    .p-red    { background: #ffebe6; color: #bf2600; }
+    .p-yellow { background: #fffae6; color: #974f0c; }
+    .p-grey   { background: #ebecf0; color: #253858; }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>Order Orchestration Flow — butler_server</h1>
+  <p>Click any step to expand details</p>
+</header>
+
+<div class="container">
+  <div class="flow" id="flow"></div>
+</div>
+
+<script>
+const steps = [
+  {
+    num: 1, color: "c1",
+    title: "Order Ingestion",
+    subtitle: "Orders enter via Kafka events or HTTP/gRPC APIs",
+    summary: "Customer orders arrive from external systems either as real-time Kafka events or through REST/gRPC API calls. Each order is validated, stored with a <em>created</em> status, and immediately queued for scheduling. This is the entry point — nothing moves in the warehouse until an order lands here.",
+    cards: [
+      { heading: "Kafka Interface", items: [
+        "Module: <code>pick_kafka_handler</code>",
+        "Topic: <code>order-pick-updates.events</code>",
+        "Event types: <code>item_picked</code>, <code>order_update</code>",
+        "AE container transactions tracked in <code>dangling_updates</code> map",
+        "Routes delete vs. update via <code>order_update_event_type</code>"
+      ]},
+      { heading: "HTTP / gRPC Interface", items: [
+        "REST: <code>pick_mvts_http_controller</code>",
+        "gRPC: <code>pick_order_grpc_service</code> — exposes <code>PickOrderService</code>",
+        "RA-type orders via <code>ra_order_event_handler</code>",
+        "Inventory events via <code>inventory_tracker_api_handler</code>",
+        "Pick instruction export via <code>pick_instruction_kafka_handler</code>"
+      ]},
+      { heading: "On Receipt", items: [
+        "Order stored as <code>order_node</code> record — status set to <code>created</code>",
+        "Registered in <code>order_manager</code> via <code>add_order/1</code>",
+        "Properties set: <code>pick_before_time</code>, <code>pick_after_time</code>, <code>bintags</code>, <code>packing_box_type</code>",
+        "Immediately triggers <code>process_orders</code> cast to the scheduler"
+      ]}
+    ]
+  },
+  {
+    num: 2, color: "c2",
+    title: "Order Manager — Scheduling Loop",
+    subtitle: "Singleton gen_server that assigns orders to PPS bins",
+    summary: "A central scheduler continuously evaluates the pool of pending orders and decides which order to fulfill next, and at which Pick-and-Pack Station (PPS). It prioritizes orders using configurable strategies — balancing throughput (picks per face) against urgency (orders close to their promised delivery time). Modifications and cancellations are also processed here before the order moves forward.",
+    cards: [
+      { heading: "Core Loop", items: [
+        "Module: <code>order_manager</code> (singleton gen_server)",
+        "Maintains <code>pending_orders_details</code> pool in process state",
+        "Flushes duplicate <code>process_orders</code> casts to prevent queue buildup",
+        "Loop timeout controlled by <code>order_processing_loop_timeout</code> (default: 1,000,000ms)",
+        "Supports <code>normal</code> and <code>maintenance_mode</code>"
+      ]},
+      { heading: "Order Sorting (pick_scheduler)", items: [
+        "Mode set via <code>pick_scheduler_mode</code>",
+        "Modes: <code>max_ppf_with_pbt</code>, <code>balanced_ppf_with_pbt</code>, <code>pbt_fifo</code>, <code>max_ppf_ignoring_pbt</code>, <code>balanced_ppf_ignoring_pbt</code>",
+        "Scoring dimensions: <code>ppf</code>, <code>pbt</code>, <code>large</code>, <code>pbt_breached</code>, <code>pbt_rob</code>, <code>sku_c</code>",
+        "Fallback: <code>pick_scheduler_fallback_strategy</code> (default: pbt_rob → ppf)",
+        "Batch size: <code>orders_batch_size</code> (default: 100)"
+      ]},
+      { heading: "PPS Selection", items: [
+        "Evaluates free bins per PPS: <code>get_min_free_ppsbins_list</code>",
+        "Overload penalty applied above <code>rack_penalty_order_overload_threshold</code> (default: 12)",
+        "Bin selection strategy: <code>round_robin</code> or <code>undefined</code>",
+        "Maintains <code>pps_order_pool</code> and <code>restricted_order_processing_pps_list</code>",
+        "Starvation protection via <code>starvation_handler</code>"
+      ]},
+      { heading: "Order Modifications", items: [
+        "Queued via <code>add_order_modification_request</code> cast",
+        "Types: orderline addition, modification, cancellation",
+        "Modification requests sorted by cost before processing",
+        "Bulk cancel: <code>handle_bulk_cancel_orders_request</code>",
+        "<code>pick_location_unavailable_orders</code> retried separately"
+      ]}
+    ]
+  },
+  {
+    num: 3, color: "c3",
+    title: "Inventory & Cost Calculation",
+    subtitle: "Finds the optimal rack-slot combination for each order",
+    summary: "For every order, the system searches available inventory across storage racks to find the best combination of slots that can fulfill all items. It scores each candidate rack by factors like storage tier, travel distance to the PPS, current congestion, and how urgently the order needs to be picked. The lowest-cost combination wins and is reserved for fulfillment.",
+    cards: [
+      { heading: "Inventory Combination Calculation", items: [
+        "Modules: <code>order_processing_functions</code> + <code>ims_cost_calculation</code>",
+        "ICC: resolves which racks/slots can fulfill all order line items",
+        "Multi-item combinations handled by <code>inventory_combination_calculation</code>",
+        "Supports case pick (<code>case_pick_allowed</code>) and broken case (<code>open_case_pick_allowed</code>)",
+        "Filters by UOM, bin tags, and volumetric constraints"
+      ]},
+      { heading: "Rack Cost Scoring", items: [
+        "Tier priority: tier_aplus(125) → tier_a(100) → tier_b(50) → tier_c(25) → tier_d(-75) → tier_f(-150)",
+        "Transport cost: <code>pick_rack_transport_cost_functions</code>",
+        "<code>pbt_system_time_buffer_for_task_cost_in_sec</code> (default: 450s) for PBT risk",
+        "<code>pick_capacity_normalization_factor</code> (default: 0.9) discounts raw capacity",
+        "ROB window: <code>min_threshold_for_rob</code>=60s, <code>max_threshold_for_rob</code>=75s"
+      ]},
+      { heading: "Relay / HTM / VTM Scoring", items: [
+        "Relay rack priority: <code>htm_going_to_same_pps</code>(150) is highest",
+        "<code>vtm_waiting_other_pps</code> penalized at -1,000,000,000,000",
+        "Virtual bin relay rack has separate priority map",
+        "<code>order_processing_weights</code> map overrides all default weights",
+        "Sector-to-rack mapping via <code>RACK_TO_SECTOR_MAPPING</code> ETS"
+      ]}
+    ]
+  },
+  {
+    num: 4, color: "c4",
+    title: "Streaming Mode",
+    subtitle: "High-throughput grouped order processing via order_streaming_manager",
+    summary: "When multiple orders share items on the same rack, streaming mode groups them together so a single rack visit can serve several orders at once — maximizing efficiency. Orders are clustered by type (e.g. multi-shelf, single-item) and routed to the most suitable PPS. The system dynamically reshuffles groupings as racks move and new orders arrive.",
+    cards: [
+      { heading: "Group Types & Routing", items: [
+        "Modules: <code>order_streaming_manager</code> (v2) + <code>order_streaming_manager_v1</code>",
+        "Group types: MSIO, MSLO, single-item, custom",
+        "Priority order: <code>streaming_grouptype_priority</code>",
+        "PPS routing: <code>streaming_pps_list</code> and <code>streaming_bin_tags</code>",
+        "Store zone routing: <code>group_to_pps_ids</code>"
+      ]},
+      { heading: "Streaming Controls", items: [
+        "Bounds per group: <code>min_streaming_orders</code> / <code>max_streaming_orders</code>",
+        "Free capacity gate: <code>streaming_free_bins_or_docks_percent_for_order_commit</code>",
+        "Rack reshuffle interval: <code>reshuffle_rack_timer_in_ms</code> (default: 5000ms)",
+        "Sub-index merging: <code>sub_index_merging_allowed</code>",
+        "Sequential pick: <code>streaming_order_pick_in_sequence</code>"
+      ]},
+      { heading: "MSIO Specifics", items: [
+        "Running MSIO bin: <code>msio_running_bin</code>",
+        "Max orders/MSIO bin: <code>max_msiob_order_count</code> (default: 100)",
+        "Max orders/physical bin: <code>max_msiob_orders_in_physical_bin</code> (default: 5)",
+        "Cross bin-tag merge: <code>merge_msio_orders_with_diff_bin_tag</code> (default: true)",
+        "Mutually exclusive tags: <code>msio_mutually_exclusive_tags_utils</code>"
+      ]},
+      { heading: "Dynamic Localisation", items: [
+        "<code>dynamic_localization_for_streaming</code> adjusts PPS routing at runtime",
+        "Trolley dismantling timeout: <code>dismantle_trolley_after_seconds</code>",
+        "Fulfillment area type: <code>fulfilment_area</code> (e.g. 'gtp')",
+        "Prioritization pass: <code>is_prioritize_required</code>",
+        "Round-robin PPS assignment: <code>group_type_round_robin_pps_map</code>"
+      ]}
+    ]
+  },
+  {
+    num: 5, color: "c5",
+    title: "Bin Planning",
+    subtitle: "Per-PPS gen_statem allocating physical bins to committed orders",
+    summary: "Once an order is committed to a PPS, a bin planner assigns it a physical bin slot on the station where items will be placed during picking. It also handles attaching totes or packing boxes to that bin if required. If anything goes wrong during allocation — say the bin is unavailable — the planner can cleanly roll back and release the reservation.",
+    cards: [
+      { heading: "Bin Planner", items: [
+        "Module: <code>bin_planner</code> (per-PPS gen_statem)",
+        "Triggered after inventory assignment is committed",
+        "Allocates physical/logical PPS bins to each order",
+        "Static bin: <code>static_bin_selection</code> maps physical = logical bin",
+        "Two-stage bin flow: <code>two_stage_bin_enabled</code> (incompatible with MTU/MRU/totes)"
+      ]},
+      { heading: "Tote & Packing Box", items: [
+        "Tote association: <code>totes_required</code>, side via <code>pick_tote_side</code>",
+        "Packing box allocation: <code>random</code> or <code>sequential</code>",
+        "Mandatory before pick: <code>packing_box_mandatory_for_pick</code>",
+        "Validation: <code>packing_box_validation_req</code>",
+        "Rollback: <code>rollback_preprocessing</code> / <code>rollback_preprocessing_soft</code>"
+      ]},
+      { heading: "MTU / MRU Flows", items: [
+        "MTU: <code>mtu_flow</code> — mobile transfer unit docking",
+        "MRU: <code>mru_flow</code> — mobile receiving unit (mutually exclusive with MTU)",
+        "Auto-undock after inactivity: <code>auto_undock_mtu_interval</code> (default: 300s)",
+        "MRU item transfer: <code>mru_transfer_required</code>",
+        "Virtual bins per PPS: <code>virtual_bins_count</code>"
+      ]}
+    ]
+  },
+  {
+    num: 6, color: "c6",
+    title: "Pick Execution (FSMs)",
+    subtitle: "Operator-driven pick workflow via front and back FSMs per PPS",
+    summary: "The actual picking happens here. A front-side state machine guides the operator through each item to pick — lighting up the correct bin indicator, displaying quantities, and confirming each scan. Once all items are picked, a back-side state machine handles order clearance: printing labels, confirming the bin is ready, and releasing it for the next order.",
+    cards: [
+      { heading: "Pick Front FSM", items: [
+        "Module: <code>pick_front_fsm</code> (per-PPS gen_statem)",
+        "Drives operator UI: pick instructions, item counts, PPTL glow",
+        "Display mode: <code>pick_front_display_count</code> — bincount / downcount / upcount",
+        "One-step pick: <code>one_step_pick</code>; PPTL press skip: <code>skip_pptl_press</code>",
+        "Parallel picking: <code>parallel_pick_allowed</code>; all PPTL at once: <code>parallel_pick_random</code>"
+      ]},
+      { heading: "Pick Back FSM", items: [
+        "Module: <code>pick_back_fsm</code> (clearing side gen_statem)",
+        "Confirms order complete, triggers bin archival",
+        "Auto-clear: <code>auto_clear_bin</code>; automated back: <code>auto_pick_back</code>",
+        "Late bin release: <code>late_bin_release</code> — waits for order to leave back side",
+        "Client confirmation gate: <code>client_clearing_confirmation</code>"
+      ]},
+      { heading: "Scan & Verification", items: [
+        "Item-level scan: <code>pick_entity_scan_required</code> (disables KQ)",
+        "Location scan: <code>location_scan_required</code>",
+        "Container scan before breaking: <code>scan_container_for_breaking</code>",
+        "Print scan before bin completion: <code>print_scan_required</code>",
+        "Print-in-bin confirmation: <code>print_label_in_sync</code>"
+      ]},
+      { heading: "Printing", items: [
+        "Order print: <code>order_print_required</code>; invoice: <code>invoice_needed</code>",
+        "Print level: carrier / order / transaction via <code>print_actions</code> map",
+        "Templates: <code>order_print_template</code>, <code>invoice_per_tote_print_template</code>",
+        "Copies: <code>no_of_print_copies</code> (default: 2)",
+        "Reprint from back: <code>pick_back_reprint_enabled</code>"
+      ]}
+    ]
+  },
+  {
+    num: 7, color: "c7",
+    title: "Order Lifecycle & Status",
+    subtitle: "State transitions from created through complete or terminal states",
+    statusFlow: true,
+    summary: "Every order moves through a defined set of states from arrival to completion. Along the way it may be modified, partially cancelled, or put on hold if inventory isn't available yet. Terminal states like <em>unfulfillable</em> or <em>cancelled</em> can be reached at any point. The system also auto-sidelines orders that repeatedly crash during processing to protect overall throughput.",
+    cards: [
+      { heading: "Normal Path", items: [
+        "<code>created</code> → order received, added to pending pool",
+        "<code>pending</code> → assigned to PPS, bins allocated",
+        "<code>running</code> → pick in progress at PPS",
+        "<code>complete</code> → all items picked, bin cleared"
+      ]},
+      { heading: "Exception States", items: [
+        "<code>inventory_awaited</code> → rack not yet available, retried on inventory event",
+        "<code>temporary_unfulfillable</code> → transient issue, auto-retried",
+        "<code>unfulfillable</code> → permanently cannot be fulfilled",
+        "<code>unprocessable</code> → system-level error",
+        "<code>abandoned</code> → timed out or dropped"
+      ]},
+      { heading: "Modifications & Cancellations", items: [
+        "Any-time cancel: <code>cancel_order/1-4</code>",
+        "Partial cancel: <code>cancel_item_details_from_order</code>",
+        "Bulk cancel: <code>handle_bulk_cancel_orders_request</code>",
+        "Mid-flight modification sub-state: <code>{pending, modified}</code>",
+        "Auto-sideline after <code>auto_sideline_threshold</code> consecutive crashes"
+      ]}
+    ]
+  },
+  {
+    num: 8, color: "c8",
+    title: "Post-Pick & Archival",
+    subtitle: "Notifications, archival, and observability after pick completion",
+    summary: "After an order is picked and the bin cleared, the system archives the order record, notifies upstream systems of completion, and frees all resources for reuse. Metrics like picks-per-face, PBT breach rates, and FSM transition times are logged to Grafana dashboards for real-time operational visibility. This closes the loop on every order that enters the warehouse.",
+    cards: [
+      { heading: "Order Completion", items: [
+        "Archive on bin clear: <code>archive_order_on_bin_clear</code> (default: true)",
+        "Completed orders written to <code>pick_instruction_archive</code>",
+        "Bin released: logical bin cleared from <code>ppsbin</code>",
+        "Rollcage mapping finalized: <code>order_rc_mapping_behaviour</code>",
+        "Tote extraction to black hole: <code>extract_tote_to_black_hole</code>"
+      ]},
+      { heading: "Notifications & Export", items: [
+        "Status updates published back upstream via Kafka",
+        "Pick instruction export: <code>order_export_server</code>",
+        "Export config: <code>pick_order_export_config</code>",
+        "gRPC reads: <code>pick_order_grpc_service</code>",
+        "Inventory notifications: <code>inventory_notification_propagation_config</code>"
+      ]},
+      { heading: "Observability", items: [
+        "Picks-per-face logging: <code>picks_per_face_logger</code>",
+        "Grafana dashboards: FSM transitions, pick stability, picks per face, L1 solution input",
+        "ROB wave tracking: <code>rob_wave_calculator</code>",
+        "PBT breach alerts: <code>breach_notification_utility</code>",
+        "Streaming debug: <code>streaming_order_debugger</code>, <code>ims_order_debugger</code>"
+      ]}
+    ]
+  }
+];
+
+const statusStates = [
+  { label: "created",    cls: "p-blue"   },
+  { arrow: "→" },
+  { label: "pending",    cls: "p-blue"   },
+  { arrow: "→" },
+  { label: "running",    cls: "p-yellow" },
+  { arrow: "→" },
+  { label: "complete",   cls: "p-green"  },
+  { sep: true },
+  { label: "inventory_awaited",        cls: "p-yellow" },
+  { sep: true },
+  { label: "temporary_unfulfillable",  cls: "p-yellow" },
+  { sep: true },
+  { label: "unfulfillable",            cls: "p-red"    },
+  { sep: true },
+  { label: "abandoned",                cls: "p-red"    },
+  { sep: true },
+  { label: "cancelled",                cls: "p-grey"   },
+];
+
+function buildStatusFlow() {
+  const wrap = document.createElement("div");
+  wrap.className = "status-flow";
+  const h4 = document.createElement("h4");
+  h4.textContent = "Status Transitions";
+  wrap.appendChild(h4);
+  const pills = document.createElement("div");
+  pills.className = "status-pills";
+  statusStates.forEach(s => {
+    const el = document.createElement("span");
+    if (s.arrow) {
+      el.className = "arrow-sep";
+      el.textContent = s.arrow;
+    } else if (s.sep) {
+      el.className = "arrow-sep";
+      el.textContent = "|";
+    } else {
+      el.className = "pill " + s.cls;
+      el.textContent = s.label;
+    }
+    pills.appendChild(el);
+  });
+  wrap.appendChild(pills);
+  return wrap;
+}
+
+function buildCard(card) {
+  const div = document.createElement("div");
+  div.className = "detail-card";
+  const h4 = document.createElement("h4");
+  h4.textContent = card.heading;
+  div.appendChild(h4);
+  const ul = document.createElement("ul");
+  card.items.forEach(text => {
+    const li = document.createElement("li");
+    li.innerHTML = text;
+    ul.appendChild(li);
+  });
+  div.appendChild(ul);
+  return div;
+}
+
+function buildStep(step, isLast) {
+  const wrapper = document.createElement("div");
+  wrapper.className = "step-wrapper";
+
+  const el = document.createElement("div");
+  el.className = "step";
+  el.setAttribute("role", "button");
+  el.setAttribute("tabindex", "0");
+  el.setAttribute("aria-expanded", "false");
+
+  const header = document.createElement("div");
+  header.className = "step-header";
+
+  const num = document.createElement("div");
+  num.className = "step-num " + step.color;
+  num.textContent = step.num;
+
+  const titleBlock = document.createElement("div");
+  titleBlock.className = "step-title-block";
+  const title = document.createElement("div");
+  title.className = "step-title";
+  title.textContent = step.title;
+  const subtitle = document.createElement("div");
+  subtitle.className = "step-subtitle";
+  subtitle.textContent = step.subtitle;
+  titleBlock.appendChild(title);
+  titleBlock.appendChild(subtitle);
+
+  const chevron = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  chevron.setAttribute("viewBox", "0 0 24 24");
+  chevron.setAttribute("fill", "none");
+  chevron.setAttribute("stroke", "currentColor");
+  chevron.setAttribute("stroke-width", "2");
+  chevron.setAttribute("stroke-linecap", "round");
+  chevron.setAttribute("stroke-linejoin", "round");
+  chevron.classList.add("step-chevron");
+  const poly = document.createElementNS("http://www.w3.org/2000/svg", "polyline");
+  poly.setAttribute("points", "6 9 12 15 18 9");
+  chevron.appendChild(poly);
+
+  header.appendChild(num);
+  header.appendChild(titleBlock);
+  header.appendChild(chevron);
+  el.appendChild(header);
+
+  const detail = document.createElement("div");
+  detail.className = "step-detail";
+
+  if (step.summary) {
+    const summary = document.createElement("div");
+    summary.className = "step-summary";
+    summary.innerHTML = step.summary;
+    detail.appendChild(summary);
+  }
+
+  const inner = document.createElement("div");
+  inner.className = "step-detail-inner";
+
+  step.cards.forEach(card => inner.appendChild(buildCard(card)));
+  if (step.statusFlow) inner.appendChild(buildStatusFlow());
+
+  detail.appendChild(inner);
+  el.appendChild(detail);
+
+  el.addEventListener("click", () => {
+    const isActive = el.classList.contains("active");
+    document.querySelectorAll(".step.active").forEach(s => {
+      s.classList.remove("active");
+      s.setAttribute("aria-expanded", "false");
+    });
+    if (!isActive) {
+      el.classList.add("active");
+      el.setAttribute("aria-expanded", "true");
+    }
+  });
+  el.addEventListener("keydown", e => {
+    if (e.key === "Enter" || e.key === " ") { e.preventDefault(); el.click(); }
+  });
+
+  wrapper.appendChild(el);
+
+  if (!isLast) {
+    const conn = document.createElement("div");
+    conn.className = "connector";
+    wrapper.appendChild(conn);
+  }
+
+  return wrapper;
+}
+
+const flow = document.getElementById("flow");
+steps.forEach((step, i) => flow.appendChild(buildStep(step, i === steps.length - 1)));
+</script>
+</body>
+</html>
